@@ -1,0 +1,21 @@
+# build folders
+bin/
+obj/
+out/
+
+# user-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# logs
+*.log
+
+# config & secrets
+appsettings.*.json
+*.env
+
+# system
+.DS_Store
+Thumbs.db

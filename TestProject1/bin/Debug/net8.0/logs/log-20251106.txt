@@ -1,4 +1,0 @@
-2025-11-06 17:22:29.835 +07:00 [ERR] Invalid IPv4 addres: $2001:db8:85a3::8a2e:370:7334
-2025-11-06 17:22:29.850 +07:00 [ERR] Time out or not response!
-2025-11-06 17:22:29.854 +07:00 [ERR] Empty String
-2025-11-06 17:50:30.110 +07:00 [ERR] Empty string
