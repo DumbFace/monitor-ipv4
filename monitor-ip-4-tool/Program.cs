@@ -33,12 +33,10 @@ public class MyBackGroundService : BackgroundService
 
     public async Task<string> GetIPv4(IEnumerable<IInternetProtocol> services)
     {
-        // var tasks = services.Select(s => s.GetIP4Async());
         string ip = String.Empty;
         foreach (var task in services)
         {
             ip = await task.GetIP4Async();
-            Thread.Sleep(TimeSpan.FromSeconds(5));
             if (!String.IsNullOrEmpty(ip)) return ip;
         }
 
@@ -58,19 +56,23 @@ public class MyBackGroundService : BackgroundService
                     _database.InitDb();
                     initDbOnce = true;
                 }
-
-                IEnumerable<IInternetProtocol> services = new List<IInternetProtocol>() { _ifconfig };
+                
+                IEnumerable<IInternetProtocol> services = new List<IInternetProtocol>()
+                {
+                    _ifconfig,
+                    _ipify
+                };
                 var ipFromService = await GetIPv4(services);
-                // var ipFromService = await _ifconfig.GetIP4Async();
                 var ipFromCaching = _memoryCache.Get<string>(Cachekeys.LAST_IP);
-                Console.WriteLine($"ipFromService:  {ipFromService}");
-                Console.WriteLine($"ipFromCaching:  {ipFromCaching}");
+                _logger.Info($"Ip From Service: {ipFromService}");
+                _logger.Info($"Ip From Caching: {ipFromCaching}");
+
                 if (String.IsNullOrEmpty(ipFromService)) continue;
                 if (String.IsNullOrEmpty(ipFromCaching))
                 {
                     var ipSql = await _database.GetLastIP();
                     _memoryCache.Set<string>(Cachekeys.LAST_IP, ipSql, null);
-                    Console.WriteLine($"ipSql:  {ipSql}");
+                    _logger.Info($"ipSql:  {ipSql}");
                 }
                 else
                 {
@@ -80,7 +82,6 @@ public class MyBackGroundService : BackgroundService
                         await _database.SaveIP(ipFromService);
                         //TODO Send Mail
                         _logger.Info($"Send Email Or Sync New IP: ${ipFromService}");
-                        Console.WriteLine($"Send Mail");
                     }
                 }
 
@@ -105,11 +106,11 @@ public class Program
             // services.AddScoped<IMemoryCache, >();
 
             services.AddSingleton<ILog, LogServices>();
-            services.AddSingleton<IDatabase, SqlLite>();
-            services.AddSingleton<ICaching, RedisCache>();
-            // services.AddSingleton<ICaching, MicrosoftMemoryCache>();
+            // services.AddSingleton<ICaching, RedisCache>();
+            services.AddSingleton<ICaching, MicrosoftMemoryCache>();
             services.AddSingleton<IInternetProtocol, IfConfig>();
             services.AddSingleton<IInternetProtocol, Ipify>();
+            services.AddSingleton<IDatabase, SqlLite>();
             services.AddHostedService<MyBackGroundService>();
         }).Build();
         await host.RunAsync();

@@ -27,6 +27,7 @@ public class IfConfig : IInternetProtocol
     {
         try
         {
+            _logger.Info("Send Request IfConfig!");
             var response = (await Http.GetStringAsync(url)).Trim();
             if (String.IsNullOrEmpty(response)) return String.Empty;
 

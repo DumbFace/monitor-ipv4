@@ -15,7 +15,9 @@ public class Ipify : IInternetProtocol
     {
         Timeout = TimeSpan.FromSeconds(10)
     };
+
     private readonly ILog _logger;
+
     public Ipify(ILog logger)
     {
         _logger = logger;
@@ -26,6 +28,7 @@ public class Ipify : IInternetProtocol
     {
         try
         {
+            _logger.Info("Send Request Ipify!");
             var response = (await Http.GetStringAsync(url)).Trim();
 
             var ipAsString = JsonConvert.DeserializeObject<IpInfoModel>(response).Ip;

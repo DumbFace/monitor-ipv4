@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using monitor_ip_4_tool.Interfaces;
+using SQLitePCL;
 
 namespace monitor_ip_4_tool.Database;
 
@@ -7,9 +8,11 @@ public class SqlLite : IDatabase
 {
     private const string DbPath = "ip_log.db";
     private static SqliteConnection connect;
+    private readonly ILog _logger;
 
-    public SqlLite()
+    public SqlLite(ILog logger)
     {
+        _logger = logger;
     }
 
     public async Task ConnectDb()
@@ -33,10 +36,23 @@ public class SqlLite : IDatabase
             Ip TEXT NOT NULL,
             CreatedAt TEXT NOT NULL
         );
-
-        INSERT INTO IpLog (Ip, CreatedAt) VALUES ('127.0.0.0', datetime('now'));
         ";
-        cmd.ExecuteNonQueryAsync();
+
+        await cmd.ExecuteNonQueryAsync();
+
+        cmd.CommandText = @"
+            select Id from Iplog limit 1;
+        ";
+        object row = await cmd.ExecuteScalarAsync();
+
+        if (row is null)
+        {
+            cmd.CommandText = @"
+                    INSERT INTO IpLog (Ip, CreatedAt) VALUES ('127.0.0.1', datetime('now'));
+                ";
+            await cmd.ExecuteNonQueryAsync();
+            _logger.Info("Inserted default row into IpLog.");
+        }
     }
 
     public async Task<int> SaveIP(string ip)

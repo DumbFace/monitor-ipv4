@@ -19,3 +19,5 @@ appsettings.*.json
 # system
 .DS_Store
 Thumbs.db
+
+.idea

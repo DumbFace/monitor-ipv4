@@ -1,5 +1,6 @@
 using monitor_ip_4_tool.Interfaces;
 using Serilog;
+using Serilog.Events;
 
 namespace monitor_ip_4_tool.Serivces;
 
@@ -9,9 +10,9 @@ public class LogServices : ILog, IDisposable
 
     public LogServices()
     {
-        _logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo
-            .File("logs/log-.txt", rollingInterval: RollingInterval.Day).CreateLogger();
-        Console.WriteLine("Log initialized");
+        _logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.Console().WriteTo.File("logs/log-.txt",
+            rollingInterval: RollingInterval.Day, restrictedToMinimumLevel: LogEventLevel.Error).CreateLogger();
+        _logger.Information("Logger Starting up");
     }
 
     public void Info(string message)
