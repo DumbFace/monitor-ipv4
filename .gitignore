@@ -2,7 +2,7 @@
 bin/
 obj/
 out/
-
+monitor-ip-4-tool/*.db
 # user-specific files
 *.user
 *.suo
