@@ -5,12 +5,12 @@ using IDatabase = monitor_ip_4_tool.Interfaces.IDatabase;
 
 namespace monitor_ip_4_tool.Caching;
 
-public class RedisCache : ICaching, IDisposable
+public class RedisCacheService : ICaching, IDisposable
 {
     private StackExchange.Redis.IDatabase _db;
     private ConnectionMultiplexer _connection;
 
-    public RedisCache()
+    public RedisCacheService()
     {
         _connection = ConnectionMultiplexer.Connect("localhost:6379");
         _db = _connection.GetDatabase();

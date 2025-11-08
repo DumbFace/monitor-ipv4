@@ -3,11 +3,11 @@ using monitor_ip_4_tool.Interfaces;
 
 namespace monitor_ip_4_tool.Caching;
 
-public class MicrosoftMemoryCache : ICaching
+public class MicrosoftMemoryCacheService : ICaching
 {
     private readonly IMemoryCache _caching;
 
-    public MicrosoftMemoryCache()
+    public MicrosoftMemoryCacheService()
     {
         var options = new MemoryCacheOptions();
         _caching = new MemoryCache(options);

@@ -106,8 +106,8 @@ public class Program
             // services.AddScoped<IMemoryCache, >();
 
             services.AddSingleton<ILog, LogServices>();
-            // services.AddSingleton<ICaching, RedisCache>();
-            services.AddSingleton<ICaching, MicrosoftMemoryCache>();
+            services.AddSingleton<ICaching, RedisCacheService>();
+            services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
             services.AddSingleton<IInternetProtocol, IfConfig>();
             services.AddSingleton<IInternetProtocol, Ipify>();
             services.AddSingleton<IDatabase, SqlLite>();
