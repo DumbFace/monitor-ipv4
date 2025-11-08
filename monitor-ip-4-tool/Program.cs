@@ -103,8 +103,6 @@ public class Program
     {
         using IHost host = Host.CreateDefaultBuilder(args).ConfigureServices(services =>
         {
-            // services.AddScoped<IMemoryCache, >();
-
             services.AddSingleton<ILog, LogServices>();
             services.AddSingleton<ICaching, RedisCacheService>();
             services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
