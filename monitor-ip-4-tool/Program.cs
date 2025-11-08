@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using monitor_ip_4_tool.Caching;
 using monitor_ip_4_tool.Classes;
@@ -19,16 +20,18 @@ public class MyBackGroundService : BackgroundService
     private readonly ILog _logger;
     private readonly IInternetProtocol _ifconfig;
     private readonly IInternetProtocol _ipify;
+    private readonly ISendMail _smtpService;
 
 
     public MyBackGroundService(ICaching memoryCache, IDatabase database, ILog logger, IInternetProtocol ifconfig,
-        IInternetProtocol ipify)
+        IInternetProtocol ipify, ISendMail smtpService)
     {
         _memoryCache = memoryCache;
         _database = database;
         _logger = logger;
         _ifconfig = ifconfig;
         _ipify = ipify;
+        _smtpService = smtpService;
     }
 
     public async Task<string> GetIPv4(IEnumerable<IInternetProtocol> services)
@@ -56,12 +59,8 @@ public class MyBackGroundService : BackgroundService
                     _database.InitDb();
                     initDbOnce = true;
                 }
-                
-                IEnumerable<IInternetProtocol> services = new List<IInternetProtocol>()
-                {
-                    _ifconfig,
-                    _ipify
-                };
+
+                IEnumerable<IInternetProtocol> services = new List<IInternetProtocol>() { _ifconfig, _ipify };
                 var ipFromService = await GetIPv4(services);
                 var ipFromCaching = _memoryCache.Get<string>(Cachekeys.LAST_IP);
                 _logger.Info($"Ip From Service: {ipFromService}");
@@ -80,8 +79,7 @@ public class MyBackGroundService : BackgroundService
                     {
                         _memoryCache.Set<string>(Cachekeys.LAST_IP, ipFromService, null);
                         await _database.SaveIP(ipFromService);
-                        //TODO Send Mail
-                        _logger.Info($"Send Email Or Sync New IP: ${ipFromService}");
+                        await _smtpService.SendMail(subject: "IP has changed", body: ipFromService);
                     }
                 }
 
@@ -92,7 +90,7 @@ public class MyBackGroundService : BackgroundService
                 _logger.Error($"Error: {ex.Message}");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken);
         }
     }
 }
@@ -101,9 +99,14 @@ public class Program
 {
     private static async Task Main(string[] args)
     {
-        using IHost host = Host.CreateDefaultBuilder(args).ConfigureServices(services =>
+        using IHost host = Host.CreateDefaultBuilder(args).ConfigureServices((context, services) =>
         {
             services.AddSingleton<ILog, LogServices>();
+
+
+            services.AddSingleton<IConfiguration>(context.Configuration);
+            services.AddSingleton<ISendMail, SMTPService>();
+            services.AddSingleton<IConfigApp, SMTPConfigService>();
             services.AddSingleton<ICaching, RedisCacheService>();
             services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
             services.AddSingleton<IInternetProtocol, IfConfig>();
