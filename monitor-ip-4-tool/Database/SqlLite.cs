@@ -6,7 +6,7 @@ namespace monitor_ip_4_tool.Database;
 
 public class SqlLite : IDatabase
 {
-    private const string DbPath = "ip_log.db";
+private static readonly string DbPath = Path.Combine(AppContext.BaseDirectory, "ip_log.db");
     private static SqliteConnection connect;
     private readonly ILog _logger;
 
