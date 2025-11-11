@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using monitor_ip_4_tool.Caching;
-using monitor_ip_4_tool.Classes;
 using monitor_ip_4_tool.Database;
 using monitor_ip_4_tool.Interfaces;
 using monitor_ip_4_tool.Utils;
@@ -102,15 +101,13 @@ public class Program
         using IHost host = Host.CreateDefaultBuilder(args).ConfigureServices((context, services) =>
         {
             services.AddSingleton<ILog, LogServices>();
-
-
             services.AddSingleton<IConfiguration>(context.Configuration);
             services.AddSingleton<ISendMail, SMTPService>();
             services.AddSingleton<IConfigApp, SMTPConfigService>();
             services.AddSingleton<ICaching, RedisCacheService>();
             services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
-            services.AddSingleton<IInternetProtocol, IfConfig>();
-            services.AddSingleton<IInternetProtocol, Ipify>();
+            services.AddSingleton<IInternetProtocol, IfConfigServices>();
+            services.AddSingleton<IInternetProtocol, IpifyService>();
             services.AddSingleton<IDatabase, SqlLite>();
             services.AddHostedService<MyBackGroundService>();
         }).Build();
