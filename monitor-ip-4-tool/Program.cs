@@ -47,70 +47,81 @@ public class MyBackGroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        bool initDbOnce = false;
         while (!stoppingToken.IsCancellationRequested)
         {
+            Thread.Sleep(ThreadSleep.MONITOR_IP * 1000);
+
             try
             {
-                _database.ConnectDb();
-                if (!initDbOnce)
-                {
-                    _database.InitDb();
-                    initDbOnce = true;
-                }
-
                 IEnumerable<IInternetProtocol> services = new List<IInternetProtocol>() { _ifconfig, _ipify };
                 var ipFromService = await GetIPv4(services);
-                var ipFromCaching = _memoryCache.Get<string>(Cachekeys.LAST_IP);
-                _logger.Info($"Ip From Service: {ipFromService}");
-                _logger.Info($"Ip From Caching: {ipFromCaching}");
+                if (String.IsNullOrEmpty(ipFromService))
+                {
+                    _logger.Info($"It is null or empty ip services: {ipFromService}");
+                    continue;
+                }
 
-                if (String.IsNullOrEmpty(ipFromService)) continue;
+                var ipFromCaching = _memoryCache.Get<string>(Cachekeys.LAST_IP);
+                var lastIp = ipFromCaching;
                 if (String.IsNullOrEmpty(ipFromCaching))
                 {
-                    var ipSql = await _database.GetLastIP();
-                    _memoryCache.Set<string>(Cachekeys.LAST_IP, ipSql, null);
-                    _logger.Info($"ipSql:  {ipSql}");
-                }
-                else
-                {
-                    if (ipFromCaching != ipFromService)
+                    await _database.ConnectDb();
+                    var ipFromDb = await _database.GetLastIP();
+                    if (String.IsNullOrEmpty(ipFromDb))
                     {
-                        _memoryCache.Set<string>(Cachekeys.LAST_IP, ipFromService, null);
-                        await _database.SaveIP(ipFromService);
-                        await _smtpService.SendMail(subject: "IP has changed", body: ipFromService);
+                        await _database.InitDb();
+                        lastIp = IP.LOCALIP;
                     }
-                }
+                    lastIp = ipFromDb;
+                    _memoryCache.Set<string>(Cachekeys.LAST_IP, ipFromDb, null);
+                    _logger.Info($"Ip from db:  {ipFromDb}");
 
+                }
+                _logger.Info($"Ip from caching:  {ipFromCaching}");
+                _logger.Info($"Ip from service:  {ipFromService}");
+                _logger.Info($"Ip from lastIp:  {lastIp}");
+
+                if (lastIp == ipFromService)
+                    continue;
+                await _database.ConnectDb();
+
+                _memoryCache.Set<string>(Cachekeys.LAST_IP, ipFromService, null);
+                await _database.SaveIP(ipFromService);
+                await _smtpService.SendMail(subject: "IP has changed", body: ipFromService);
                 await _database.CloseDb();
+
+                throw new Exception("Fake error");
             }
+
             catch (Exception ex)
             {
                 _logger.Error($"Error: {ex.Message}");
             }
-
-            await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken);
         }
     }
-}
 
-public class Program
-{
-    private static async Task Main(string[] args)
+    public class Program
     {
-        using IHost host = Host.CreateDefaultBuilder(args).ConfigureServices((context, services) =>
+        private static async Task Main(string[] args)
         {
-            services.AddSingleton<ILog, LogServices>();
-            services.AddSingleton<IConfiguration>(context.Configuration);
-            services.AddSingleton<ISendMail, SMTPService>();
-            services.AddSingleton<IConfigApp, SMTPConfigService>();
-            services.AddSingleton<ICaching, RedisCacheService>();
-            services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
-            services.AddSingleton<IInternetProtocol, IfConfigServices>();
-            services.AddSingleton<IInternetProtocol, IpifyService>();
-            services.AddSingleton<IDatabase, SqlLite>();
-            services.AddHostedService<MyBackGroundService>();
-        }).Build();
-        await host.RunAsync();
+            using IHost host = Host.CreateDefaultBuilder(args)
+            .UseSerilog()
+            .ConfigureServices((context, services) =>
+            {
+                services.AddSingleton<ILog, LogServices>();
+                services.AddSingleton<IConfiguration>(context.Configuration);
+                services.AddSingleton<ISendMail, SMTPService>();
+                services.AddSingleton<IConfigApp, SMTPConfigService>();
+
+                //Alternative redis caching 
+                services.AddSingleton<ICaching, RedisCacheService>();
+                services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
+                services.AddSingleton<IInternetProtocol, IfConfigServices>();
+                services.AddSingleton<IInternetProtocol, IpifyService>();
+                services.AddSingleton<IDatabase, SqlLite>();
+                services.AddHostedService<MyBackGroundService>();
+            }).Build();
+            await host.RunAsync();
+        }
     }
 }

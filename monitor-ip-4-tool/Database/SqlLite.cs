@@ -1,12 +1,14 @@
 using Microsoft.Data.Sqlite;
 using monitor_ip_4_tool.Interfaces;
 using SQLitePCL;
+using StackExchange.Redis;
+using IDatabase = monitor_ip_4_tool.Interfaces.IDatabase;
 
 namespace monitor_ip_4_tool.Database;
 
 public class SqlLite : IDatabase
 {
-private static readonly string DbPath = Path.Combine(AppContext.BaseDirectory, "ip_log.db");
+    private static readonly string DbPath = Path.Combine(AppContext.BaseDirectory, "ip_log.db");
     private static SqliteConnection connect;
     private readonly ILog _logger;
 
@@ -17,6 +19,7 @@ private static readonly string DbPath = Path.Combine(AppContext.BaseDirectory, "
 
     public async Task ConnectDb()
     {
+        _logger.Info($"Path: {DbPath}");
         connect = new SqliteConnection("Data Source=" + DbPath);
         connect.Open();
     }
@@ -36,23 +39,39 @@ private static readonly string DbPath = Path.Combine(AppContext.BaseDirectory, "
             Ip TEXT NOT NULL,
             CreatedAt TEXT NOT NULL
         );
+        INSERT INTO IpLog (Ip, CreatedAt) VALUES ('127.0.0.1', datetime('now'));
+
         ";
 
         await cmd.ExecuteNonQueryAsync();
 
-        cmd.CommandText = @"
-            select Id from Iplog limit 1;
-        ";
-        object row = await cmd.ExecuteScalarAsync();
-
-        if (row is null)
+        try
         {
             cmd.CommandText = @"
-                    INSERT INTO IpLog (Ip, CreatedAt) VALUES ('127.0.0.1', datetime('now'));
-                ";
-            await cmd.ExecuteNonQueryAsync();
-            _logger.Info("Inserted default row into IpLog.");
+               INSERT INTO IpLog (Ip, CreatedAt) VALUES ('127.0.0.1', datetime('now'));
+            ";
+
+            var result = await cmd.ExecuteScalarAsync();
+            _logger.Info($"Init Db result: ${result}");
         }
+        catch (Exception ex)
+        {
+            _logger.Error($"Error init first row: ${ex.Message}");
+        }
+
+
+        // cmd.CommandText = @"
+        //     select Id from Iplog limit 1;
+        // ";
+        // object row = await cmd.ExecuteScalarAsync();
+
+        // if (row is null)
+        // {
+        //     cmd.CommandText = @"
+        //         ";
+        //     await cmd.ExecuteNonQueryAsync();
+        //     _logger.Info("Inserted default row into IpLog.");
+        // }
     }
 
     public async Task<int> SaveIP(string ip)
@@ -66,9 +85,18 @@ private static readonly string DbPath = Path.Combine(AppContext.BaseDirectory, "
 
     public async Task<string> GetLastIP()
     {
-        var cmd = connect.CreateCommand();
-        cmd.CommandText = "SELECT ip FROM Iplog ORDER BY id DESC LIMIT 1;";
-        var result = await cmd.ExecuteScalarAsync() as string;
+        string result;
+        try
+        {
+            var cmd = connect.CreateCommand();
+            cmd.CommandText = "SELECT ip FROM Iplog ORDER BY id DESC LIMIT 1;";
+            result = await cmd.ExecuteScalarAsync() as string;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Get Last IP {ex.Message}");
+            result = null;
+        }
         return result;
     }
 }
