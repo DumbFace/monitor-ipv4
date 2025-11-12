@@ -9,6 +9,12 @@ using Microsoft.Extensions.Hosting;
 using monitor_ip_4_tool.Constant;
 using monitor_ip_4_tool.Serivces;
 using Serilog;
+using Polly;
+using Polly.Retry;
+using Polly.CircuitBreaker;
+using Polly.Registry;
+using static System.Net.WebRequestMethods;
+using System.Net;
 
 namespace monitor_ip_4_tool;
 
@@ -20,10 +26,19 @@ public class MyBackGroundService : BackgroundService
     private readonly IInternetProtocol _ifconfig;
     private readonly IInternetProtocol _ipify;
     private readonly ISendMail _smtpService;
+    private readonly ResiliencePipelineProvider<string> _polly;
+    private readonly IHttpClientFactory _httpClient;
 
-
-    public MyBackGroundService(ICaching memoryCache, IDatabase database, ILog logger, IInternetProtocol ifconfig,
-        IInternetProtocol ipify, ISendMail smtpService)
+    public MyBackGroundService(
+            ICaching memoryCache,
+            IDatabase database,
+            ILog logger,
+            IInternetProtocol ifconfig,
+            IInternetProtocol ipify,
+            ISendMail smtpService,
+            ResiliencePipelineProvider<string> polly,
+            IHttpClientFactory httpClient
+            )
     {
         _memoryCache = memoryCache;
         _database = database;
@@ -31,6 +46,9 @@ public class MyBackGroundService : BackgroundService
         _ifconfig = ifconfig;
         _ipify = ipify;
         _smtpService = smtpService;
+        _polly = polly;
+        _httpClient = httpClient;
+
     }
 
     public async Task<string> GetIPv4(IEnumerable<IInternetProtocol> services)
@@ -53,6 +71,37 @@ public class MyBackGroundService : BackgroundService
 
             try
             {
+                // using (HttpClient client = new HttpClient())
+                // {
+                //     client.Timeout = TimeSpan.FromSeconds(5);
+                //     // var response = await client.GetAsync("http://medium.com/");
+                //     var response = await client.GetAsync("https://www.gaoogle.com/");
+
+                //     response.EnsureSuccessStatusCode();
+
+                //     if (response.StatusCode == HttpStatusCode.OK)
+                //     {
+                //         _logger.Info("Request OK ");
+
+                //     }
+                // }
+
+                var pipeline = _polly.GetPipeline("my-pipeline");
+                await pipeline.ExecuteAsync(async token =>
+                {
+
+                    var client = _httpClient.CreateClient("myClient");
+
+                    var response = await client.GetAsync("https://www.gaoogle.com/");
+                    if (response.StatusCode == HttpStatusCode.OK)
+                        _logger.Info("Request Success!!");
+
+                    // _logger.Info("Retry");
+                    // return default;
+                    // return Task.CompletedTask;
+                });
+
+                continue;
                 IEnumerable<IInternetProtocol> services = new List<IInternetProtocol>() { _ifconfig, _ipify };
                 var ipFromService = await GetIPv4(services);
                 if (String.IsNullOrEmpty(ipFromService))
@@ -108,11 +157,37 @@ public class MyBackGroundService : BackgroundService
             .UseSerilog()
             .ConfigureServices((context, services) =>
             {
+                var circuitOptions = new CircuitBreakerStrategyOptions
+                {
+                    FailureRatio = 0.5,
+                    SamplingDuration = TimeSpan.FromSeconds(30),
+                    MinimumThroughput = 10,
+                    BreakDuration = TimeSpan.FromSeconds(15),
+                };
+                services.AddResiliencePipeline("my-pipeline", pipeline =>
+                {
+                    pipeline.AddRetry(new RetryStrategyOptions
+                    {
+                        MaxRetryAttempts = 3,
+                        Delay = TimeSpan.FromSeconds(5),
+                        OnRetry = (args) =>
+                        {
+                            Console.WriteLine($"Retry attempt {args.AttemptNumber} after {args.RetryDelay}s due to {args.Outcome.Exception.Message}");
+                            return default;
+                        },
+
+                    });
+                    pipeline.AddTimeout(TimeSpan.FromSeconds(5));
+                    pipeline.AddCircuitBreaker(circuitOptions);
+                });
                 services.AddSingleton<ILog, LogServices>();
                 services.AddSingleton<IConfiguration>(context.Configuration);
                 services.AddSingleton<ISendMail, SMTPService>();
                 services.AddSingleton<IConfigApp, SMTPConfigService>();
-
+                services.AddHttpClient("myClient", client =>
+                {
+                    client.Timeout = Timeout.InfiniteTimeSpan;
+                });
                 //Alternative redis caching 
                 services.AddSingleton<ICaching, RedisCacheService>();
                 services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
