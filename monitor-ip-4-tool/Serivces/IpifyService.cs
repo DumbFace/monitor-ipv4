@@ -9,27 +9,24 @@ namespace monitor_ip_4_tool.Serivces;
 
 public class IpifyService : IInternetProtocol
 {
-    private const string url = "https://ipinfo.io/json";
-
-    private static readonly HttpClient Http = new(new HttpClientHandler { AllowAutoRedirect = true })
-    {
-        Timeout = TimeSpan.FromSeconds(10)
-    };
+    private const string url = "https://ipiwdnfo.io/json";
+    private readonly IHttpClientFactory _http;
 
     private readonly ILog _logger;
 
-    public IpifyService(ILog logger)
+    public IpifyService(ILog logger, IHttpClientFactory http)
     {
         _logger = logger;
-        Http.DefaultRequestHeaders.UserAgent.ParseAdd("curl/7.64.1");
+        _http = http;
     }
 
     public async Task<string> GetIP4Async()
     {
         try
         {
+            var client = _http.CreateClient("httpClient");
             _logger.Info("Send Request Ipify!");
-            var response = (await Http.GetStringAsync(url)).Trim();
+            var response = (await client.GetStringAsync(url)).Trim();
 
             var ipAsString = JsonConvert.DeserializeObject<IpInfoModel>(response).Ip;
             if (String.IsNullOrEmpty(ipAsString)) return String.Empty;

@@ -8,27 +8,30 @@ namespace monitor_ip_4_tool.Serivces;
 
 public class IfConfigServices : IInternetProtocol
 {
-    private const string url = "https://ifconfig.me/ip";
+    private const string url = "https://ifcowdwkdnwkd1dnfig.me/ip";
 
-    private static readonly HttpClient Http = new(new HttpClientHandler { AllowAutoRedirect = true })
-    {
-        Timeout = TimeSpan.FromSeconds(10)
-    };
-    
+    private readonly IHttpClientFactory _httpClient;
+
     private readonly ILog _logger;
 
-    public IfConfigServices(ILog logger)
+    public IfConfigServices(
+        ILog logger,
+        IHttpClientFactory httpClient
+
+        )
     {
         _logger = logger;
-        Http.DefaultRequestHeaders.UserAgent.ParseAdd("curl/7.64.1");
+        _httpClient = httpClient;
+
     }
 
     public async Task<string> GetIP4Async()
     {
         try
         {
+            var client = _httpClient.CreateClient("httpClient");
             _logger.Info("Send Request IfConfig!");
-            var response = (await Http.GetStringAsync(url)).Trim();
+            var response = (await client.GetStringAsync(url)).Trim();
             if (String.IsNullOrEmpty(response)) return String.Empty;
 
             if (IPAddress.TryParse(response, out var ip) && ip.AddressFamily == AddressFamily.InterNetwork)
