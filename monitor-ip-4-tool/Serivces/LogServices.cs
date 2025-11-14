@@ -15,7 +15,6 @@ public class LogServices : ILog, IDisposable
             rollingInterval: RollingInterval.Day, restrictedToMinimumLevel: LogEventLevel.Error).CreateLogger();
         _logger.Information("Logger Starting up");
         _logger.Information($"Path: {path}");
-
     }
 
     public void Info(string message)

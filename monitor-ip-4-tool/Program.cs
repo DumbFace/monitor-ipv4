@@ -8,9 +8,7 @@ using Microsoft.Extensions.Hosting;
 using monitor_ip_4_tool.Constant;
 using monitor_ip_4_tool.Serivces;
 using Serilog;
-using Polly;
-using Polly.Retry;
-using Polly.Timeout;
+using Polly.Caching;
 
 namespace monitor_ip_4_tool;
 
@@ -24,7 +22,6 @@ public class MyBackGroundService : BackgroundService
     private readonly ISendMail _smtpService;
     private readonly IRetryHandler _retryHandler;
 
-    private readonly IHttpClientFactory http;
 
     public MyBackGroundService(
             ICaching memoryCache,
@@ -33,11 +30,9 @@ public class MyBackGroundService : BackgroundService
             IInternetProtocol ifconfig,
             IInternetProtocol ipify,
             ISendMail smtpService,
-            IRetryHandler retryHandler,
-            IHttpClientFactory httpClient
+            IRetryHandler retryHandler
             )
     {
-        http = httpClient;
         _retryHandler = retryHandler;
         _memoryCache = memoryCache;
         _database = database;
@@ -61,6 +56,7 @@ public class MyBackGroundService : BackgroundService
 
                 //TODO Make Chaining method
                 ipFromService = String.IsNullOrEmpty(ipFromService) ? await _retryHandler.ExecuteAsync(_ipify.GetIP4Async) : ipFromService;
+
                 if (String.IsNullOrEmpty(ipFromService))
                 {
                     _logger.Info($"It is null or empty ip services: {ipFromService}");
@@ -97,7 +93,6 @@ public class MyBackGroundService : BackgroundService
                 await _smtpService.SendMail(subject: "IP has changed", body: ipFromService);
                 await _database.CloseDb();
 
-                throw new Exception("Fake error");
             }
 
             catch (Exception ex)
@@ -113,44 +108,35 @@ public class MyBackGroundService : BackgroundService
         {
             using IHost host = Host.CreateDefaultBuilder(args)
             .UseSerilog()
+            .ConfigureAppConfiguration((context, config) =>
+            {
+                var env = context.HostingEnvironment.EnvironmentName;
+                // var directory = 
+                config.AddJsonFile($"appsettings.Development.json", optional: false, reloadOnChange: true);
+                if (env == Constant.Environment.PROD)
+                {
+                    config.AddJsonFile($"appsettings.Production.json", optional: false, reloadOnChange: true);
+                }
+            })
             .ConfigureServices((context, services) =>
                     {
+                        services.AddSingleton<ILog, LogServices>();
+
                         services.AddHttpClient("httpClient", client =>
                         {
                             client.Timeout = Timeout.InfiniteTimeSpan;
                         });
-                        services.AddResiliencePipeline("defaultPipeline", pipeline =>
-                        {
-                            pipeline.AddRetry(new RetryStrategyOptions
-                            {
-                                MaxRetryAttempts = 3,
-                                Delay = TimeSpan.FromSeconds(10),
-                                OnRetry = (args) =>
-                                {
-                                    Console.WriteLine($"Retry attempt {args.AttemptNumber} after {args.RetryDelay}s due to {args.Outcome.Exception.Message}");
-                                    return default;
-                                },
 
-                            });
-                            pipeline.AddTimeout(new TimeoutStrategyOptions
-                            {
-                                Timeout = TimeSpan.FromSeconds(10),
-                                OnTimeout = (args) =>
-                                {
-                                    Console.WriteLine($"event on timeout");
-                                    return default;
-                                }
-                            });
-                        });
+                        services.AddSingleton<IPollyFactory, PollyFactory>();
+                        services.AddSingleton<IRetryHandler, RetryServices>();
 
-                        services.AddSingleton<ILog, LogServices>();
                         services.AddSingleton<IConfiguration>(context.Configuration);
                         services.AddSingleton<ISendMail, SMTPService>();
                         services.AddSingleton<IConfigApp, SMTPConfigService>();
-                        services.AddSingleton<IRetryHandler, RetryServices>();
+
                         //Alternative redis caching 
                         services.AddSingleton<ICaching, RedisCacheService>();
-                        services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
+                        // services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
                         services.AddSingleton<IInternetProtocol, IfConfigServices>();
                         services.AddSingleton<IInternetProtocol, IpifyService>();
                         services.AddSingleton<IDatabase, SqlLite>();

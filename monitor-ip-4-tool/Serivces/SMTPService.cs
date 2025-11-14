@@ -22,6 +22,7 @@ public class SMTPService : ISendMail
         try
         {
             SMTPConfig config = _configSMTP.ReadConfig<SMTPConfig>();
+            if (config is null) throw new Exception("Cannot read config or config null");
             MailMessage mail = new MailMessage();
             mail.From = new MailAddress(config.From);
             mail.To.Add(config.To);
@@ -39,7 +40,7 @@ public class SMTPService : ISendMail
             }
             catch (Exception ex)
             {
-                _logger.Info("Error sending mail: " + ex.Message);
+                _logger.Error("Error sending mail: " + ex.Message);
             }
         }
         catch (Exception ex)
