@@ -1,9 +1,6 @@
 
 using monitor_ip_4_tool.Interfaces;
-using Polly;
 using Polly.Registry;
-using Serilog;
-using Serilog.Core;
 
 namespace monitor_ip_4_tool.Serivces
 {
@@ -17,13 +14,13 @@ namespace monitor_ip_4_tool.Serivces
             _logger = logger;
         }
 
-        public async Task<T> ExecuteAsync<T>(Func<Task<T>> action)
+        public async Task<T> ExecuteAsync<T>(Func<CancellationToken, Task<T>> action)
         {
             var pipeline = _pipelineProvider.GetPipeline("defaultPipeline");
 
             return await pipeline.ExecuteAsync(async token =>
             {
-                return await action();
+                return await action(token);
             });
         }
     }
