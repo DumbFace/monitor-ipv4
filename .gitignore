@@ -12,9 +12,6 @@ monitor-ip-4-tool/*.db
 # logs
 *.log
 
-# config & secrets
-appsettings.*.json
-*.env
 
 # system
 .DS_Store
