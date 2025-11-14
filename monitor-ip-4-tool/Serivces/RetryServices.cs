@@ -19,11 +19,18 @@ namespace monitor_ip_4_tool.Serivces
 
         public async Task<T> ExecuteAsync<T>(Func<CancellationToken, Task<T>> action)
         {
-
             return await _pipeline.ExecuteAsync(async token =>
             {
                 return await action(token);
             });
+        }
+
+        public async Task ExecuteAsync(Func<CancellationToken, Task> action)
+        {
+            await _pipeline.ExecuteAsync(async token =>
+               {
+                   await action(token);
+               });
         }
     }
 }

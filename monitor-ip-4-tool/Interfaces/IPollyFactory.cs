@@ -5,5 +5,8 @@ namespace monitor_ip_4_tool.Interfaces
     public interface IPollyFactory
     {
         ResiliencePipeline GetPipeLine();
+
+        // ResiliencePipeline<string> GetIPServicesPipeLine();
+
     }
 }

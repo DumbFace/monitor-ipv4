@@ -27,7 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="appsettings.Development.json" Condition="'$(DOTNET_ENVIRONMENT)' == 'Development'">
+        <None Update="appsettings.Development.json">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
 
