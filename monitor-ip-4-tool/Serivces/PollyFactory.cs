@@ -1,5 +1,6 @@
 using monitor_ip_4_tool.Interfaces;
 using Polly;
+using Polly.CircuitBreaker;
 using Polly.Retry;
 using Polly.Timeout;
 
@@ -18,7 +19,6 @@ namespace monitor_ip_4_tool.Serivces
         {
             var builder = new ResiliencePipelineBuilder();
 
-            // builder.AddStrategy<string>();
             builder.AddRetry(new RetryStrategyOptions
             {
                 ShouldHandle = args =>
@@ -30,12 +30,10 @@ namespace monitor_ip_4_tool.Serivces
                 Delay = TimeSpan.FromSeconds(3),
                 OnRetry = args =>
                 {
-                    _logger.Warn($"Retry attempt {args.AttemptNumber} after {args.RetryDelay}s due to empty IP");
-                    // _logger.Warn($"Retry attempt {args.AttemptNumber} after {args.RetryDelay}s due to {args.Outcome.Exception.Message}");
-                    return new ValueTask();
+                    _logger.Warn($"Retry attempt {args.AttemptNumber} after {args.RetryDelay}s due to {args.Outcome.Result}");
+                    return default;
                 }
             });
-            // builder.AddTimeoutDefault(_logger);
 
             return builder.Build();
         }
@@ -48,7 +46,7 @@ namespace monitor_ip_4_tool.Serivces
 
             builder.AddRetryDefault(_logger);
             builder.AddTimeoutDefault(_logger);
-
+            builder.AddBreakCircuitDefault(_logger);
             return builder.Build();
         }
 
@@ -80,6 +78,33 @@ namespace monitor_ip_4_tool.Serivces
                 {
                     _logger.Warn($"Timeout {args.Timeout}");
                     return new ValueTask();
+                }
+            });
+        }
+
+        public static ResiliencePipelineBuilder AddBreakCircuitDefault(this ResiliencePipelineBuilder builder, ILog _logger)
+        {
+            return builder.AddCircuitBreaker(new CircuitBreakerStrategyOptions
+            {
+                FailureRatio = 0.5,
+                MinimumThroughput = 10,
+                SamplingDuration = TimeSpan.FromSeconds(30),
+                BreakDuration = TimeSpan.FromSeconds(10),
+
+                OnOpened = args =>
+                {
+                    _logger.Error("Circuit opened!");
+                    return ValueTask.CompletedTask;
+                },
+                OnClosed = args =>
+                {
+                    _logger.Info("Circuit closed.");
+                    return ValueTask.CompletedTask;
+                },
+                OnHalfOpened = args =>
+                {
+                    _logger.Warn("Circuit half-open.");
+                    return ValueTask.CompletedTask;
                 }
             });
         }

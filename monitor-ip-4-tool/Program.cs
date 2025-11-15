@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using monitor_ip_4_tool.Caching;
 using monitor_ip_4_tool.Database;
@@ -9,8 +8,6 @@ using monitor_ip_4_tool.Constant;
 using monitor_ip_4_tool.Serivces;
 using Serilog;
 using Polly;
-using Polly.Caching;
-using Microsoft.Extensions.Options;
 
 namespace monitor_ip_4_tool;
 
@@ -27,7 +24,6 @@ public class MyBackGroundService : BackgroundService
             ICaching memoryCache,
             IDatabase database,
             ILog logger,
-            IInternetProtocol ifconfig,
             IEnumerable<IInternetProtocol> ipv4Services,
             ISendMail smtpService,
             IRetryHandler retryHandler,
@@ -48,41 +44,30 @@ public class MyBackGroundService : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            Thread.Sleep(ThreadSleep.MONITOR_IP * 1000);
 
             try
             {
-                string ipFromService = String.Empty;
-                // ipFromService = String.IsNullOrEmpty(ipFromService) ? await _retryHandler.ExecuteAsync(_ipify.GetIP4Async) : ipFromService;
-                // TODO Make Chaining method
-                ipFromService = await _pipeline.ExecuteAsync<string>(async (token) =>
+
+                string ipFromService = await _pipeline.ExecuteAsync<string>(async (token) =>
                 {
-                    string ip = String.Empty;
-                    var result = await Task.Run(async () =>
+
+
+                    string ipv4 = String.Empty;
+                    foreach (var service in _ipv4Services)
                     {
-                        int loop = 1;
-                        string result = String.Empty;
-                        foreach (var service in _ipv4Services)
+                        try
                         {
-                            try
-                            {
-                                _logger.Info($"Loop time {loop++}");
-                                // await Task.Delay(2000, token);
-                                // throw new Exception("Error Http Request");
-                                result = await service.GetIP4Async(token);
-                                if (String.IsNullOrEmpty(result)) continue;
-                            }
-
-                            catch (Exception ex)
-                            {
-                                _logger.Error($"Error IPv4 service: {ex.Message}");
-                                // return String.Empty;
-                            }
+                            ipv4 = await service.GetIP4Async(token);
+                            if (!String.IsNullOrEmpty(ipv4)) return ipv4;
                         }
-                        return result;
-                    }, token);
 
-                    return result;
+                        catch (Exception ex)
+                        {
+                            _logger.Error($"Error IPv4 service: {ex.Message}");
+                            Thread.Sleep(ThreadSleep.MONITOR_IP * 1000);
+                        }
+                    }
+                    return ipv4;
                 });
 
                 if (String.IsNullOrEmpty(ipFromService))
@@ -104,7 +89,7 @@ public class MyBackGroundService : BackgroundService
                         lastIp = IP.LOCALIP;
                     }
                     lastIp = ipFromDb;
-                    _memoryCache.Set<string>(Cachekeys.LAST_IP, ipFromDb, null);
+                    _memoryCache.Set(Cachekeys.LAST_IP, ipFromDb, null);
                     _logger.Info($"Ip from db:  {ipFromDb}");
 
                 }
@@ -116,11 +101,9 @@ public class MyBackGroundService : BackgroundService
                     continue;
                 await _database.ConnectDb();
 
-
-                //TODO uncomment later
-                // await _retryHandler.ExecuteAsync((token) => _smtpService.SendMail(token, subject: "IP has changed", body: ipFromService));
-                // _memoryCache.Set(Cachekeys.LAST_IP, ipFromService, null);
-                // await _database.SaveIP(ipFromService);
+                await _retryHandler.ExecuteAsync((token) => _smtpService.SendMail(token, subject: "IP has changed", body: ipFromService));
+                _memoryCache.Set(Cachekeys.LAST_IP, ipFromService, null);
+                await _database.SaveIP(ipFromService);
                 await _database.CloseDb();
 
             }
@@ -150,11 +133,6 @@ public class MyBackGroundService : BackgroundService
                        {
                            services.AddSingleton<ILog, LogServices>();
 
-                           services.AddHttpClient("httpClient", client =>
-                           {
-                               client.Timeout = TimeSpan.FromSeconds(2);
-                           });
-
                            services.AddSingleton<IPollyFactory, PollyFactory>();
                            services.AddSingleton<IRetryHandler, RetryServices>();
 
@@ -163,11 +141,13 @@ public class MyBackGroundService : BackgroundService
                            services.AddSingleton<IConfigApp, SMTPConfigService>();
 
                            //Alternative redis caching 
-                           services.AddSingleton<ICaching, RedisCacheService>();
-                           // services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
+                           //    services.AddSingleton<ICaching, RedisCacheService>();
+                           services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
                            services.AddSingleton<IInternetProtocol, IfConfigServices>();
                            services.AddSingleton<IInternetProtocol, IpifyService>();
                            services.AddSingleton<IDatabase, SqlLite>();
+                           services.AddSingleton<ICustomHttpFactory, CustomHttpClientFactory>();
+
                            services.AddHostedService<MyBackGroundService>();
                        }).Build();
             await host.RunAsync();

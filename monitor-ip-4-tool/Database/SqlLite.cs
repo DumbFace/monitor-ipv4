@@ -1,7 +1,5 @@
 using Microsoft.Data.Sqlite;
 using monitor_ip_4_tool.Interfaces;
-using SQLitePCL;
-using StackExchange.Redis;
 using IDatabase = monitor_ip_4_tool.Interfaces.IDatabase;
 
 namespace monitor_ip_4_tool.Database;
@@ -58,20 +56,6 @@ public class SqlLite : IDatabase
         {
             _logger.Error($"Error init first row: ${ex.Message}");
         }
-
-
-        // cmd.CommandText = @"
-        //     select Id from Iplog limit 1;
-        // ";
-        // object row = await cmd.ExecuteScalarAsync();
-
-        // if (row is null)
-        // {
-        //     cmd.CommandText = @"
-        //         ";
-        //     await cmd.ExecuteNonQueryAsync();
-        //     _logger.Info("Inserted default row into IpLog.");
-        // }
     }
 
     public async Task<int> SaveIP(string ip)
