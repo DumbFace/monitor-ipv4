@@ -6,7 +6,7 @@ namespace monitor_ip_4_tool.Interfaces
     {
         ResiliencePipeline GetPipeLine();
 
-        // ResiliencePipeline<string> GetIPServicesPipeLine();
+        ResiliencePipeline GetIPServicesPipeLine();
 
     }
 }

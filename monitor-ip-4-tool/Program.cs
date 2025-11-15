@@ -8,7 +8,9 @@ using Microsoft.Extensions.Hosting;
 using monitor_ip_4_tool.Constant;
 using monitor_ip_4_tool.Serivces;
 using Serilog;
-using System.Diagnostics.Contracts;
+using Polly;
+using Polly.Caching;
+using Microsoft.Extensions.Options;
 
 namespace monitor_ip_4_tool;
 
@@ -17,12 +19,10 @@ public class MyBackGroundService : BackgroundService
     private readonly ICaching _memoryCache;
     private readonly IDatabase _database;
     private readonly ILog _logger;
-    // private readonly IInternetProtocol _ifconfig;
     private readonly IEnumerable<IInternetProtocol> _ipv4Services;
     private readonly ISendMail _smtpService;
     private readonly IRetryHandler _retryHandler;
-
-
+    private readonly ResiliencePipeline _pipeline;
     public MyBackGroundService(
             ICaching memoryCache,
             IDatabase database,
@@ -30,9 +30,11 @@ public class MyBackGroundService : BackgroundService
             IInternetProtocol ifconfig,
             IEnumerable<IInternetProtocol> ipv4Services,
             ISendMail smtpService,
-            IRetryHandler retryHandler
+            IRetryHandler retryHandler,
+            IPollyFactory pollyFactory
             )
     {
+        _pipeline = pollyFactory.GetIPServicesPipeLine();
         _retryHandler = retryHandler;
         _memoryCache = memoryCache;
         _database = database;
@@ -50,22 +52,38 @@ public class MyBackGroundService : BackgroundService
 
             try
             {
-                // var tasks = new List<Func<CancellationToken, Task<string>>>() {
-                //     _ifconfig.GetIP4Async,
-                //     _ipify.GetIP4Async
-                // };
                 string ipFromService = String.Empty;
-                foreach (var task in _ipv4Services)
-                {
-                    ipFromService = await _retryHandler.ExecuteAsync(task.GetIP4Async);
-                    if (String.IsNullOrEmpty(ipFromService))
-                        continue;
-                    break;
-                }
-                // var ipFromService = await _retryHandler.ExecuteAsync(_ifconfig.GetIP4Async);
-
-                // TODO Make Chaining method
                 // ipFromService = String.IsNullOrEmpty(ipFromService) ? await _retryHandler.ExecuteAsync(_ipify.GetIP4Async) : ipFromService;
+                // TODO Make Chaining method
+                ipFromService = await _pipeline.ExecuteAsync<string>(async (token) =>
+                {
+                    string ip = String.Empty;
+                    var result = await Task.Run(async () =>
+                    {
+                        int loop = 1;
+                        string result = String.Empty;
+                        foreach (var service in _ipv4Services)
+                        {
+                            try
+                            {
+                                _logger.Info($"Loop time {loop++}");
+                                // await Task.Delay(2000, token);
+                                // throw new Exception("Error Http Request");
+                                result = await service.GetIP4Async(token);
+                                if (String.IsNullOrEmpty(result)) continue;
+                            }
+
+                            catch (Exception ex)
+                            {
+                                _logger.Error($"Error IPv4 service: {ex.Message}");
+                                // return String.Empty;
+                            }
+                        }
+                        return result;
+                    }, token);
+
+                    return result;
+                });
 
                 if (String.IsNullOrEmpty(ipFromService))
                 {
@@ -98,9 +116,11 @@ public class MyBackGroundService : BackgroundService
                     continue;
                 await _database.ConnectDb();
 
-                await _retryHandler.ExecuteAsync((token) => _smtpService.SendMail(token, subject: "IP has changed", body: ipFromService));
-                _memoryCache.Set(Cachekeys.LAST_IP, ipFromService, null);
-                await _database.SaveIP(ipFromService);
+
+                //TODO uncomment later
+                // await _retryHandler.ExecuteAsync((token) => _smtpService.SendMail(token, subject: "IP has changed", body: ipFromService));
+                // _memoryCache.Set(Cachekeys.LAST_IP, ipFromService, null);
+                // await _database.SaveIP(ipFromService);
                 await _database.CloseDb();
 
             }
@@ -132,7 +152,7 @@ public class MyBackGroundService : BackgroundService
 
                            services.AddHttpClient("httpClient", client =>
                            {
-                               client.Timeout = Timeout.InfiniteTimeSpan;
+                               client.Timeout = TimeSpan.FromSeconds(2);
                            });
 
                            services.AddSingleton<IPollyFactory, PollyFactory>();

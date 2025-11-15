@@ -18,29 +18,24 @@ namespace monitor_ip_4_tool.Serivces
         {
             var builder = new ResiliencePipelineBuilder();
 
+            // builder.AddStrategy<string>();
             builder.AddRetry(new RetryStrategyOptions
             {
                 ShouldHandle = args =>
                 {
-                    var outcome = args.Outcome;
-
-                    if (outcome.Exception != null)
-                        return new ValueTask<bool>(true);
-                        
-                    if (String.IsNullOrEmpty((string)outcome.Result))
-                        return new ValueTask<bool>(true);
-
-                    return new ValueTask<bool>(false);
+                    _logger.Warn($"(string)args.Outcome.Result: {(string)args.Outcome.Result}");
+                    return new ValueTask<bool>((string)args.Outcome.Result == string.Empty);
                 },
                 MaxRetryAttempts = 3,
-                Delay = TimeSpan.FromSeconds(5),
+                Delay = TimeSpan.FromSeconds(3),
                 OnRetry = args =>
                 {
-                    _logger.Warn($"Retry attempt {args.AttemptNumber} after {args.RetryDelay}s due to {args.Outcome.Exception.Message}");
+                    _logger.Warn($"Retry attempt {args.AttemptNumber} after {args.RetryDelay}s due to empty IP");
+                    // _logger.Warn($"Retry attempt {args.AttemptNumber} after {args.RetryDelay}s due to {args.Outcome.Exception.Message}");
                     return new ValueTask();
                 }
             });
-            builder.AddTimeoutDefault(_logger);
+            // builder.AddTimeoutDefault(_logger);
 
             return builder.Build();
         }
@@ -80,7 +75,7 @@ namespace monitor_ip_4_tool.Serivces
         {
             return builder.AddTimeout(new TimeoutStrategyOptions
             {
-                Timeout = TimeSpan.FromSeconds(10),
+                Timeout = TimeSpan.FromSeconds(15),
                 OnTimeout = (args) =>
                 {
                     _logger.Warn($"Timeout {args.Timeout}");

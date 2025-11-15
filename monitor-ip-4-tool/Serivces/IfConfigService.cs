@@ -6,7 +6,7 @@ namespace monitor_ip_4_tool.Serivces;
 
 public class IfConfigServices : IInternetProtocol
 {
-    private const string url = "https://ifconfig.me/ip";
+    private const string url = "https://ifconssfig.me/ip";
 
     private readonly IHttpClientFactory _httpClient;
 
@@ -23,8 +23,12 @@ public class IfConfigServices : IInternetProtocol
 
     }
 
-    public async Task<string> GetIP4Async(CancellationToken token)
+    public async Task<string> GetIP4Async(CancellationToken token = default)
     {
+        //TODO Delete later
+        _logger.Info("Before Delay");
+        await Task.Delay(1000, token);
+        _logger.Info("After Delay");
         var client = _httpClient.CreateClient("httpClient");
         _logger.Info("Send Request IfConfig!");
         var response = (await client.GetStringAsync(url, token)).Trim();
