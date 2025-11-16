@@ -44,10 +44,9 @@ public class MyBackGroundService : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-
+            await Task.Delay(ThreadSleep.MONITOR_IP * 1000);
             try
             {
-
                 string ipFromService = await _pipeline.ExecuteAsync<string>(async (token) =>
                 {
 
