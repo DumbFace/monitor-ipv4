@@ -11,7 +11,6 @@ using Polly;
 using monitor_ip_4_tool.Models;
 using Microsoft.Extensions.Options;
 
-
 namespace monitor_ip_4_tool;
 
 public class MyBackGroundService : BackgroundService
@@ -22,10 +21,12 @@ public class MyBackGroundService : BackgroundService
     private readonly IEnumerable<IInternetProtocol> _ipv4Services;
     private readonly ISendMail _smtpService;
     private readonly IRetryHandler _retryHandler;
+    private readonly IOpenVPN _openVPN;
 
     readonly IOptionsMonitor<SystemConfig> _systemConfigMonitor;
     private readonly ResiliencePipeline _pipeline;
     public MyBackGroundService(
+            IOpenVPN openVPN,
             ICaching memoryCache,
             IDatabase database,
             ILog logger,
@@ -36,6 +37,7 @@ public class MyBackGroundService : BackgroundService
             IOptionsMonitor<SystemConfig> systemConfigMonitor
             )
     {
+        _openVPN = openVPN;
         _systemConfigMonitor = systemConfigMonitor;
         _pipeline = pollyFactory.GetIPServicesPipeLine();
         _retryHandler = retryHandler;
@@ -57,13 +59,11 @@ public class MyBackGroundService : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await Task.Delay(_systemConfigMonitor.CurrentValue.ScanIPv4FromSecond);
+            await Task.Delay(_systemConfigMonitor.CurrentValue.ScanIPv4FromSecond, stoppingToken);
             try
             {
                 string ipFromService = await _pipeline.ExecuteAsync<string>(async (token) =>
                 {
-
-
                     string ipv4 = String.Empty;
                     foreach (var service in _ipv4Services)
                     {
@@ -117,6 +117,7 @@ public class MyBackGroundService : BackgroundService
                 _memoryCache.Set(Cachekeys.LAST_IP, ipFromService, null);
                 await _database.SaveIP(ipFromService);
                 await _database.CloseDb();
+                await _openVPN.RestartService(_systemConfigMonitor.CurrentValue.LinuxOpenVPNService);
             }
             catch (Exception ex)
             {
@@ -161,7 +162,17 @@ public class MyBackGroundService : BackgroundService
                            services.AddOptions<SystemConfig>().Bind(context.Configuration.GetSection(ConfigEnum.SYSTEM)).ValidateDataAnnotations().ValidateOnStart();
                            services.AddOptions<RedisConfig>().Bind(context.Configuration.GetSection(ConfigEnum.REDIS));
                            services.AddOptions<SMTPConfig>().Bind(context.Configuration.GetSection(ConfigEnum.SMTP));
+                           services.AddSingleton<LinuxOpenVPNService>();
+                           services.AddSingleton<WindowOpenVPNService>();
+
+                           services.AddSingleton<IOpenVPN>(sp =>
+                               OperatingSystem.IsLinux()
+                                   ? sp.GetRequiredService<LinuxOpenVPNService>()
+                                   : sp.GetRequiredService<WindowOpenVPNService>()
+                           );
+
                            services.AddHostedService<MyBackGroundService>();
+
                        }).Build();
             await host.RunAsync();
         }

@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
-using monitor_ip_4_tool.Constant;
 using monitor_ip_4_tool.Interfaces;
 using monitor_ip_4_tool.Models;
 
@@ -46,9 +45,7 @@ public class SMTPService : ISendMail
         smtp.Credentials = new NetworkCredential(config.From, config.Password);
         smtp.EnableSsl = true;
 
-        //TODO remove later
-        // await smtp.SendMailAsync(mail, token);
-        await Task.Delay(5000);
+        await smtp.SendMailAsync(mail, token);
         _logger.Info($"Send Email Or Sync New IP: ${body}");
     }
 }

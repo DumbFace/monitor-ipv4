@@ -10,6 +10,10 @@ public class SystemConfig
 
     public int ScanIPv4FromSecond => ScanIPv4 * 1000;
 
+    public string LinuxOpenVPNService { get; set; }
+
+    public string WindowOpenVPNService { get; set; }
+
     public string ToStringJson()
     {
         return JsonSerializer.Serialize(this, new JsonSerializerOptions
