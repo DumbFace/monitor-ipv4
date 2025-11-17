@@ -15,12 +15,14 @@ public class SqlLite : IDatabase
         _logger = logger;
     }
 
-    public Task ConnectDb()
+    public async Task ConnectDb()
     {
-        _logger.Info($"Path: {DbPath}");
-        connect = new SqliteConnection("Data Source=" + DbPath);
-        connect.Open();
-        return default;
+        await Task.Run(() =>
+        {
+            _logger.Info($"Path: {DbPath}");
+            connect = new SqliteConnection("Data Source=" + DbPath);
+            connect.Open();
+        });
     }
 
     public async Task CloseDb()

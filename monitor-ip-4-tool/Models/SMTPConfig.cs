@@ -15,11 +15,11 @@ namespace monitor_ip_4_tool.Models
         public int Port { get; set; }
 
         public string ToStringJson()
-    {
-        return JsonSerializer.Serialize(this, new JsonSerializerOptions
         {
-            WriteIndented = true
-        });
-    }
+            return JsonSerializer.Serialize(this, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+        }
     }
 }

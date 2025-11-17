@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 
 namespace monitor_ip_4_tool.Models;
 
@@ -8,4 +9,12 @@ public class SystemConfig
     public int ScanIPv4 { get; set; }
 
     public int ScanIPv4FromSecond => ScanIPv4 * 1000;
+
+    public string ToStringJson()
+    {
+        return JsonSerializer.Serialize(this, new JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+    }
 }

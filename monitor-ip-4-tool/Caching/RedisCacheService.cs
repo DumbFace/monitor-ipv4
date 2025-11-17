@@ -28,7 +28,7 @@ public class RedisCacheService : ICaching, IDisposable
         _logger.Info($"Redis DB is ready {_db.Ping()}");
         _redisConfigMonitor.OnChange((config) =>
         {
-            _logger.Info($"SMTP change config {config.ToStringJson()}");
+            _logger.Info($"Redis change config {config.ToStringJson()}");
         });
     }
 

@@ -22,7 +22,6 @@ public class MyBackGroundService : BackgroundService
     private readonly IEnumerable<IInternetProtocol> _ipv4Services;
     private readonly ISendMail _smtpService;
     private readonly IRetryHandler _retryHandler;
-    readonly IConfiguration _config;
 
     readonly IOptionsMonitor<SystemConfig> _systemConfigMonitor;
     private readonly ResiliencePipeline _pipeline;
@@ -34,12 +33,10 @@ public class MyBackGroundService : BackgroundService
             ISendMail smtpService,
             IRetryHandler retryHandler,
             IPollyFactory pollyFactory,
-            IConfiguration config,
             IOptionsMonitor<SystemConfig> systemConfigMonitor
             )
     {
         _systemConfigMonitor = systemConfigMonitor;
-        _config = config;
         _pipeline = pollyFactory.GetIPServicesPipeLine();
         _retryHandler = retryHandler;
         _memoryCache = memoryCache;
@@ -50,9 +47,8 @@ public class MyBackGroundService : BackgroundService
 
         _systemConfigMonitor.OnChange((config) =>
         {
-            _logger.Info($"Scan from second {config.ScanIPv4FromSecond}");
+            _logger.Info($"System change config {config.ToStringJson()}");
         });
-        _logger.Info($"Scan from second {_systemConfigMonitor.CurrentValue.ScanIPv4FromSecond}");
 
 
     }
