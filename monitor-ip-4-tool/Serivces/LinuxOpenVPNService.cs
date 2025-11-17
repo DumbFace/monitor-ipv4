@@ -15,7 +15,7 @@ namespace monitor_ip_4_tool.Serivces
         public async Task RestartService(string serviceName)
         {
             await Task.Run(() => Process.Start("sudo",$"systemctl restart {serviceName}"));
-            _logger.Info($"Restart Service at {DateTime.Now}");
+            _logger.Info($"Restart Service Openvpn Linux Successful at {DateTime.Now}");
         }
     }
 }
