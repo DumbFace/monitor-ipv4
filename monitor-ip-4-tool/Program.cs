@@ -8,6 +8,9 @@ using monitor_ip_4_tool.Constant;
 using monitor_ip_4_tool.Serivces;
 using Serilog;
 using Polly;
+using monitor_ip_4_tool.Models;
+using Microsoft.Extensions.Options;
+
 
 namespace monitor_ip_4_tool;
 
@@ -19,6 +22,9 @@ public class MyBackGroundService : BackgroundService
     private readonly IEnumerable<IInternetProtocol> _ipv4Services;
     private readonly ISendMail _smtpService;
     private readonly IRetryHandler _retryHandler;
+    readonly IConfiguration _config;
+
+    readonly IOptionsMonitor<SystemConfig> _systemConfigMonitor;
     private readonly ResiliencePipeline _pipeline;
     public MyBackGroundService(
             ICaching memoryCache,
@@ -27,9 +33,13 @@ public class MyBackGroundService : BackgroundService
             IEnumerable<IInternetProtocol> ipv4Services,
             ISendMail smtpService,
             IRetryHandler retryHandler,
-            IPollyFactory pollyFactory
+            IPollyFactory pollyFactory,
+            IConfiguration config,
+            IOptionsMonitor<SystemConfig> systemConfigMonitor
             )
     {
+        _systemConfigMonitor = systemConfigMonitor;
+        _config = config;
         _pipeline = pollyFactory.GetIPServicesPipeLine();
         _retryHandler = retryHandler;
         _memoryCache = memoryCache;
@@ -38,13 +48,20 @@ public class MyBackGroundService : BackgroundService
         _ipv4Services = ipv4Services;
         _smtpService = smtpService;
 
+        _systemConfigMonitor.OnChange((config) =>
+        {
+            _logger.Info($"Scan from second {config.ScanIPv4FromSecond}");
+        });
+        _logger.Info($"Scan from second {_systemConfigMonitor.CurrentValue.ScanIPv4FromSecond}");
+
+
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await Task.Delay(ThreadSleep.MONITOR_IP * 1000);
+            await Task.Delay(_systemConfigMonitor.CurrentValue.ScanIPv4FromSecond);
             try
             {
                 string ipFromService = await _pipeline.ExecuteAsync<string>(async (token) =>
@@ -104,7 +121,6 @@ public class MyBackGroundService : BackgroundService
                 _memoryCache.Set(Cachekeys.LAST_IP, ipFromService, null);
                 await _database.SaveIP(ipFromService);
                 await _database.CloseDb();
-
             }
             catch (Exception ex)
             {
@@ -137,16 +153,18 @@ public class MyBackGroundService : BackgroundService
 
                            services.AddSingleton(context.Configuration);
                            services.AddSingleton<ISendMail, SMTPService>();
-                           services.AddSingleton<IConfigApp, SMTPConfigService>();
 
                            //Alternative redis caching 
-                           //    services.AddSingleton<ICaching, RedisCacheService>();
-                           services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
+                           services.AddSingleton<ICaching, RedisCacheService>();
+                           //    services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
                            services.AddSingleton<IInternetProtocol, IfConfigServices>();
                            services.AddSingleton<IInternetProtocol, IpifyService>();
                            services.AddSingleton<IDatabase, SqlLite>();
                            services.AddSingleton<ICustomHttpFactory, CustomHttpClientFactory>();
 
+                           services.AddOptions<SystemConfig>().Bind(context.Configuration.GetSection(ConfigEnum.SYSTEM)).ValidateDataAnnotations().ValidateOnStart();
+                           services.AddOptions<RedisConfig>().Bind(context.Configuration.GetSection(ConfigEnum.REDIS));
+                           services.AddOptions<SMTPConfig>().Bind(context.Configuration.GetSection(ConfigEnum.SMTP));
                            services.AddHostedService<MyBackGroundService>();
                        }).Build();
             await host.RunAsync();

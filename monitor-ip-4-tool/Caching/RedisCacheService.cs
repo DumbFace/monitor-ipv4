@@ -1,7 +1,8 @@
+using Microsoft.Extensions.Options;
 using monitor_ip_4_tool.Interfaces;
+using monitor_ip_4_tool.Models;
 using Newtonsoft.Json;
 using StackExchange.Redis;
-using IDatabase = monitor_ip_4_tool.Interfaces.IDatabase;
 
 namespace monitor_ip_4_tool.Caching;
 
@@ -9,12 +10,26 @@ public class RedisCacheService : ICaching, IDisposable
 {
     private StackExchange.Redis.IDatabase _db;
     private ConnectionMultiplexer _connection;
+    private ILog _logger;
 
-    public RedisCacheService()
+    readonly IOptionsMonitor<RedisConfig> _redisConfigMonitor;
+
+    public RedisCacheService(
+        ILog logger,
+        IOptionsMonitor<RedisConfig> redisConfigMonitor
+    )
     {
-        _connection = ConnectionMultiplexer.Connect("localhost:6379");
+        _redisConfigMonitor = redisConfigMonitor;
+        _logger = logger;
+        RedisConfig redisConfig = _redisConfigMonitor.CurrentValue;
+        if (redisConfig is null) throw new Exception("Cannot read redis config or redis is null");
+        _connection = ConnectionMultiplexer.Connect($"{redisConfig.Server}:{redisConfig.Port}");
         _db = _connection.GetDatabase();
-        var pong = _db.Ping();
+        _logger.Info($"Redis DB is ready {_db.Ping()}");
+        _redisConfigMonitor.OnChange((config) =>
+        {
+            _logger.Info($"SMTP change config {config.ToStringJson()}");
+        });
     }
 
     public T Get<T>(string key)
