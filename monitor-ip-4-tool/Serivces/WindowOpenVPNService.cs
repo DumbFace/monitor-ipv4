@@ -34,5 +34,11 @@ namespace monitor_ip_4_tool.Serivces
             });
 
         }
+
+        public Task UpdateClient(string ipv4)
+        {
+            
+            throw new NotImplementedException();
+        }
     }
 }

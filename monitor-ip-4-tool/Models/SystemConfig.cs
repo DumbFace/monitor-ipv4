@@ -10,10 +10,6 @@ public class SystemConfig
 
     public int ScanIPv4FromSecond => ScanIPv4 * 1000;
 
-    public string LinuxOpenVPNService { get; set; }
-
-    public string WindowOpenVPNService { get; set; }
-
     public string ToStringJson()
     {
         return JsonSerializer.Serialize(this, new JsonSerializerOptions
@@ -21,4 +17,11 @@ public class SystemConfig
             WriteIndented = true
         });
     }
+
+    public OperatingConfig LinuxOperating { get; set; }
+
+    public OperatingConfig WindowOperating { get; set; }
+
+    public string TEST_IP_PUBLIC { get; set; }
+
 }

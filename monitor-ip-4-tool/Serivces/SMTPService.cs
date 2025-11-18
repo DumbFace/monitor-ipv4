@@ -45,7 +45,11 @@ public class SMTPService : ISendMail
         smtp.Credentials = new NetworkCredential(config.From, config.Password);
         smtp.EnableSsl = true;
 
-        await smtp.SendMailAsync(mail, token);
+        //TODO remove later
+
+
+        await Task.Delay(2000);
+        // await smtp.SendMailAsync(mail, token);
         _logger.Info($"Send Email Or Sync New IP: ${body}");
     }
 }
