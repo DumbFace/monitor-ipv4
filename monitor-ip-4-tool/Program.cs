@@ -58,6 +58,9 @@ public class MyBackGroundService : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             await Task.Delay(_systemConfigMonitor.CurrentValue.ScanIPv4FromSecond, stoppingToken);
+            // await _openVPN.UpdateClient(_systemConfigMonitor.CurrentValue.TEST_IP_PUBLIC);
+            // continue;
+
             try
             {
                 string ipFromService = await _pipeline.ExecuteAsync<string>(async (token) =>
@@ -116,6 +119,7 @@ public class MyBackGroundService : BackgroundService
                 await _database.SaveIP(ipFromService);
                 await _database.CloseDb();
                 //TODO pass an ipv4 to method
+
                 await _openVPN.UpdateClient(_systemConfigMonitor.CurrentValue.TEST_IP_PUBLIC);
                 await _openVPN.RestartService(OperatingSystem.IsLinux() ?
                     _systemConfigMonitor.CurrentValue.LinuxOperating.OpenVPNService :
@@ -137,6 +141,7 @@ public class MyBackGroundService : BackgroundService
                     .ConfigureAppConfiguration((context, config) =>
                         {
                             var env = context.HostingEnvironment.EnvironmentName;
+                            Console.WriteLine($"ENV: {env}");
                             config.AddJsonFile($"appsettings.Development.json", optional: false, reloadOnChange: true);
                             if (env == Constant.Environment.PROD)
                             {

@@ -46,8 +46,6 @@ public class SMTPService : ISendMail
         smtp.EnableSsl = true;
 
         //TODO remove later
-
-
         await Task.Delay(2000);
         // await smtp.SendMailAsync(mail, token);
         _logger.Info($"Send Email Or Sync New IP: ${body}");

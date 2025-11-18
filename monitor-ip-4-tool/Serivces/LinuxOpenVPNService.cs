@@ -44,17 +44,17 @@ namespace monitor_ip_4_tool.Serivces
                     var newClientConfig = clientConfig.Replace("{ipv4}", ipv4)
                                                       .Replace("{ca}", caContent)
                                                       .Replace("{cert}", certContent)
-                                                      .Replace("{directory}", _operatingConfig.DirectoryOpenVPN)
+                                                      .Replace("{directory}", _operatingConfig.DirectoryOpenVPNAccount)
                                                       .Replace("{key}", keyContent);
-                    File.WriteAllText($"{_operatingConfig.DirectoryOpenVPN}/myconfig.conf", newClientConfig);
+                    File.WriteAllText($"{_operatingConfig.DirectoryOpenVPNConfig}", newClientConfig);
                     _logger.Info($"Write myconfig.conf successfull at {_operatingConfig.DirectoryOpenVPN}");
 
 
-                    var passwordClient = File.ReadAllText("password.txt");
-                    var newPasswordClient = passwordClient.Replace("{username}", _operatingConfig.UserName)
+                    var accountClient = File.ReadAllText("password.txt");
+                    var newAccountClient = accountClient.Replace("{username}", _operatingConfig.UserName)
                                                           .Replace("{password}", _operatingConfig.Password);
 
-                    File.WriteAllText($"{_operatingConfig.DirectoryOpenVPN}/password.txt", newPasswordClient);
+                    File.WriteAllText($"{_operatingConfig.DirectoryOpenVPNAccount}", newAccountClient);
                     _logger.Info($"Write password.txt successfull at {_operatingConfig.DirectoryOpenVPN}");
                 }
 
