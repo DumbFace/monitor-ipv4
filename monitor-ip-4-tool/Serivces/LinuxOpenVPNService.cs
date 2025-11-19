@@ -1,7 +1,7 @@
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Options;
-using monitor_ip_4_tool.Constant;
 using monitor_ip_4_tool.Interfaces;
 using monitor_ip_4_tool.Models;
 
@@ -9,6 +9,8 @@ namespace monitor_ip_4_tool.Serivces
 {
     public class LinuxOpenVPNService : IOpenVPN
     {
+
+    private static readonly string AppPath = AppContext.BaseDirectory;
         private readonly ILog _logger;
         private readonly IOptionsMonitor<SystemConfig> _systemConfigMonitor;
 
@@ -35,12 +37,16 @@ namespace monitor_ip_4_tool.Serivces
                 _operatingConfig = _systemConfigMonitor.CurrentValue.LinuxOperating;
                 try
                 {
+                    Func<string,string> GetAppPath = (nameFile) =>
+                    {
+                        return Path.Combine(AppContext.BaseDirectory,nameFile);   
+                    };
 
-                    var caContent = File.ReadAllText("ca.txt");
-                    var certContent = File.ReadAllText("cert.txt");
-                    var keyContent = File.ReadAllText("key.txt");
+                    var caContent = File.ReadAllText(GetAppPath("ca.txt"));
+                    var certContent = File.ReadAllText(GetAppPath("cert.txt"));
+                    var keyContent = File.ReadAllText(GetAppPath("key.txt"));
+                    var clientConfig = File.ReadAllText(GetAppPath("client.ovpn"));
 
-                    var clientConfig = File.ReadAllText("client.ovpn");
                     var newClientConfig = clientConfig.Replace("{ipv4}", ipv4)
                                                       .Replace("{ca}", caContent)
                                                       .Replace("{cert}", certContent)
@@ -50,7 +56,7 @@ namespace monitor_ip_4_tool.Serivces
                     _logger.Info($"Write myconfig.conf successfull at {_operatingConfig.DirectoryOpenVPN}");
 
 
-                    var accountClient = File.ReadAllText("password.txt");
+                   var accountClient = File.ReadAllText(GetAppPath("password.txt"));
                     var newAccountClient = accountClient.Replace("{username}", _operatingConfig.UserName)
                                                           .Replace("{password}", _operatingConfig.Password);
 

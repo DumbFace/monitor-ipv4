@@ -1,4 +1,3 @@
-using System;
 using monitor_ip_4_tool.Interfaces;
 using Serilog;
 using Serilog.Events;

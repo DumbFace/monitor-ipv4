@@ -58,9 +58,6 @@ public class MyBackGroundService : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             await Task.Delay(_systemConfigMonitor.CurrentValue.ScanIPv4FromSecond, stoppingToken);
-            // await _openVPN.UpdateClient(_systemConfigMonitor.CurrentValue.TEST_IP_PUBLIC);
-            // continue;
-
             try
             {
                 string ipFromService = await _pipeline.ExecuteAsync<string>(async (token) =>
@@ -118,9 +115,8 @@ public class MyBackGroundService : BackgroundService
                 _memoryCache.Set(Cachekeys.LAST_IP, ipFromService, null);
                 await _database.SaveIP(ipFromService);
                 await _database.CloseDb();
-                //TODO pass an ipv4 to method
 
-                await _openVPN.UpdateClient(_systemConfigMonitor.CurrentValue.TEST_IP_PUBLIC);
+                await _openVPN.UpdateClient(ipFromService);
                 await _openVPN.RestartService(OperatingSystem.IsLinux() ?
                     _systemConfigMonitor.CurrentValue.LinuxOperating.OpenVPNService :
                     _systemConfigMonitor.CurrentValue.WindowOperating.OpenVPNService);
@@ -138,15 +134,13 @@ public class MyBackGroundService : BackgroundService
         {
             using IHost host = Host.CreateDefaultBuilder(args)
                     .UseSerilog()
+                    .UseWindowsService()
                     .ConfigureAppConfiguration((context, config) =>
                         {
                             var env = context.HostingEnvironment.EnvironmentName;
                             Console.WriteLine($"ENV: {env}");
-                            config.AddJsonFile($"appsettings.Development.json", optional: false, reloadOnChange: true);
-                            if (env == Constant.Environment.PROD)
-                            {
-                                config.AddJsonFile($"appsettings.Production.json", optional: false, reloadOnChange: true);
-                            }
+                            var path = env == Constant.Environment.DEV ? "appsettings.Development.json" : "appsettings.json";
+                            config.AddJsonFile(path, optional: false, reloadOnChange: true);
                         })
                     .ConfigureServices((context, services) =>
                        {
@@ -159,8 +153,8 @@ public class MyBackGroundService : BackgroundService
                            services.AddSingleton<ISendMail, SMTPService>();
 
                            //Alternative redis caching 
-                           services.AddSingleton<ICaching, RedisCacheService>();
-                           //    services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
+                           //    services.AddSingleton<ICaching, RedisCacheService>();
+                           services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
                            services.AddSingleton<IInternetProtocol, IfConfigServices>();
                            services.AddSingleton<IInternetProtocol, IpifyService>();
                            services.AddSingleton<IDatabase, SqlLite>();
