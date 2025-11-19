@@ -61,7 +61,7 @@ public class SqlLite : IDatabase
         }
     }
 
-    public async Task<int> SaveIP(string ip)
+    public async Task<int> SaveIP(string ip, CancellationToken token = default)
     {
         var cmd = connect.CreateCommand();
         cmd.CommandText = "INSERT INTO IpLog (Ip, CreatedAt) VALUES ($ip, datetime('now'));";
@@ -70,7 +70,7 @@ public class SqlLite : IDatabase
         return result;
     }
 
-    public async Task<string> GetLastIP()
+    public async Task<string> GetLastIP(CancellationToken token = default)
     {
         string result;
         try

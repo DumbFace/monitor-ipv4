@@ -1,14 +1,14 @@
 namespace monitor_ip_4_tool.Interfaces;
 
-public interface IDatabase
+public interface IDatabase : IDataCRUD, IDataCycle
 {
-    Task ConnectDb();
-    
-    Task InitDb();
+    // Task ConnectDb();
 
-    Task<int> SaveIP(string ip);
-    
-    Task<string> GetLastIP();
+    // Task InitDb();
 
-    Task CloseDb();
+    // Task CloseDb();
+
+    // Task<int> SaveIP(string ip);
+
+    // Task<string> GetLastIP();
 }

@@ -15,7 +15,6 @@ public class IfConfigServices : IInternetProtocol
     public IfConfigServices(
         ILog logger,
         ICustomHttpFactory httpClient
-
         )
     {
         _logger = logger;

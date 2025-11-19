@@ -22,10 +22,11 @@ public class MyBackGroundService : BackgroundService
     private readonly ISendMail _smtpService;
     private readonly IRetryHandler _retryHandler;
     private readonly IOpenVPN _openVPN;
-
+    private readonly IDataCRUD _firebase;
     readonly IOptionsMonitor<SystemConfig> _systemConfigMonitor;
     private readonly ResiliencePipeline _pipeline;
     public MyBackGroundService(
+            IDataCRUD firebase,
             IOpenVPN openVPN,
             ICaching memoryCache,
             IDatabase database,
@@ -37,6 +38,7 @@ public class MyBackGroundService : BackgroundService
             IOptionsMonitor<SystemConfig> systemConfigMonitor
             )
     {
+        _firebase = firebase;
         _openVPN = openVPN;
         _systemConfigMonitor = systemConfigMonitor;
         _pipeline = pollyFactory.GetIPServicesPipeLine();
@@ -58,6 +60,7 @@ public class MyBackGroundService : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             await Task.Delay(_systemConfigMonitor.CurrentValue.ScanIPv4FromSecond, stoppingToken);
+
             try
             {
                 string ipFromService = await _pipeline.ExecuteAsync<string>(async (token) =>
@@ -120,6 +123,10 @@ public class MyBackGroundService : BackgroundService
                 await _openVPN.RestartService(OperatingSystem.IsLinux() ?
                     _systemConfigMonitor.CurrentValue.LinuxOperating.OpenVPNService :
                     _systemConfigMonitor.CurrentValue.WindowOperating.OpenVPNService);
+                //TODO uncomment later
+                // await _retryHandler.ExecuteAsync((token) => _firebase.SaveIP(ipFromService, stoppingToken));
+                await _retryHandler.ExecuteAsync((token) => _firebase.SaveIP(_systemConfigMonitor.CurrentValue.TEST_IP_PUBLIC, stoppingToken));
+
             }
             catch (Exception ex)
             {
@@ -139,7 +146,7 @@ public class MyBackGroundService : BackgroundService
                         {
                             var env = context.HostingEnvironment.EnvironmentName;
                             Console.WriteLine($"ENV: {env}");
-                            var path = env == Constant.Environment.DEV ? "appsettings.Development.json" : "appsettings.json";
+                            var path = env == EnvironmentEnum.DEV ? "appsettings.Development.json" : "appsettings.json";
                             config.AddJsonFile(path, optional: false, reloadOnChange: true);
                         })
                     .ConfigureServices((context, services) =>
@@ -163,9 +170,11 @@ public class MyBackGroundService : BackgroundService
                            services.AddOptions<SystemConfig>().Bind(context.Configuration.GetSection(ConfigEnum.SYSTEM)).ValidateDataAnnotations().ValidateOnStart();
                            services.AddOptions<RedisConfig>().Bind(context.Configuration.GetSection(ConfigEnum.REDIS));
                            services.AddOptions<SMTPConfig>().Bind(context.Configuration.GetSection(ConfigEnum.SMTP));
+                           services.AddOptions<FirebaseConfig>().Bind(context.Configuration.GetSection(ConfigEnum.FIREBASE));
+
                            services.AddSingleton<LinuxOpenVPNService>();
                            services.AddSingleton<WindowOpenVPNService>();
-
+                           services.AddSingleton<IDataCRUD, Firebase>();
                            services.AddSingleton<IOpenVPN>(sp =>
                                OperatingSystem.IsLinux()
                                    ? sp.GetRequiredService<LinuxOpenVPNService>()

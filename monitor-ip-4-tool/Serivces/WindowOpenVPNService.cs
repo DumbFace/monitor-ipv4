@@ -27,6 +27,8 @@ namespace monitor_ip_4_tool.Serivces
         {
             await Task.Run(() =>
             {
+                #pragma warning disable CA1416 
+
                 ServiceController service = new ServiceController(serviceName);
                 TimeSpan timeout = TimeSpan.FromMilliseconds(timeoutMilliseconds);
 
@@ -36,10 +38,13 @@ namespace monitor_ip_4_tool.Serivces
                     service.Stop();
                     service.WaitForStatus(ServiceControllerStatus.Stopped, timeout);
                 }
-
                 service.Start();
                 service.WaitForStatus(ServiceControllerStatus.Running, timeout);
+
                 _logger.Info($"Restart Service Openvpn Window Successful at {DateTime.Now}");
+
+                #pragma warning restore CA1416 
+
             });
 
         }
