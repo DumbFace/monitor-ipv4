@@ -22,11 +22,10 @@ public class MyBackGroundService : BackgroundService
     private readonly ISendMail _smtpService;
     private readonly IRetryHandler _retryHandler;
     private readonly IOpenVPN _openVPN;
-    private readonly IDataCRUD _firebase;
     readonly IOptionsMonitor<SystemConfig> _systemConfigMonitor;
     private readonly ResiliencePipeline _pipeline;
+    private readonly IMessageBroker _messageBroker;
     public MyBackGroundService(
-            IDataCRUD firebase,
             IOpenVPN openVPN,
             ICaching memoryCache,
             IDatabase database,
@@ -35,10 +34,11 @@ public class MyBackGroundService : BackgroundService
             ISendMail smtpService,
             IRetryHandler retryHandler,
             IPollyFactory pollyFactory,
-            IOptionsMonitor<SystemConfig> systemConfigMonitor
+            IOptionsMonitor<SystemConfig> systemConfigMonitor,
+            IMessageBroker messageBroker
             )
     {
-        _firebase = firebase;
+        _messageBroker = messageBroker;
         _openVPN = openVPN;
         _systemConfigMonitor = systemConfigMonitor;
         _pipeline = pollyFactory.GetIPServicesPipeLine();
@@ -112,6 +112,9 @@ public class MyBackGroundService : BackgroundService
 
                 if (lastIp == ipFromService)
                     continue;
+                //Durable data state
+                await _messageBroker.PublishMessageAsync(ipFromService);
+
                 await _database.ConnectDb();
 
                 await _retryHandler.ExecuteAsync((token) => _smtpService.SendMail(token, subject: "IP has changed", body: ipFromService));
@@ -123,10 +126,6 @@ public class MyBackGroundService : BackgroundService
                 await _openVPN.RestartService(OperatingSystem.IsLinux() ?
                     _systemConfigMonitor.CurrentValue.LinuxOperating.OpenVPNService :
                     _systemConfigMonitor.CurrentValue.WindowOperating.OpenVPNService);
-                //TODO uncomment later
-                // await _retryHandler.ExecuteAsync((token) => _firebase.SaveIP(ipFromService, stoppingToken));
-                await _retryHandler.ExecuteAsync((token) => _firebase.SaveIP(_systemConfigMonitor.CurrentValue.TEST_IP_PUBLIC, stoppingToken));
-
             }
             catch (Exception ex)
             {
@@ -160,8 +159,8 @@ public class MyBackGroundService : BackgroundService
                            services.AddSingleton<ISendMail, SMTPService>();
 
                            //Alternative redis caching 
-                           //    services.AddSingleton<ICaching, RedisCacheService>();
-                           services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
+                              services.AddSingleton<ICaching, RedisCacheService>();
+                        //    services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
                            services.AddSingleton<IInternetProtocol, IfConfigServices>();
                            services.AddSingleton<IInternetProtocol, IpifyService>();
                            services.AddSingleton<IDatabase, SqlLite>();
@@ -175,6 +174,10 @@ public class MyBackGroundService : BackgroundService
                            services.AddSingleton<LinuxOpenVPNService>();
                            services.AddSingleton<WindowOpenVPNService>();
                            services.AddSingleton<IDataCRUD, Firebase>();
+                           services.AddSingleton<IMessageBroker, RabbitMQClientServices>();
+
+
+
                            services.AddSingleton<IOpenVPN>(sp =>
                                OperatingSystem.IsLinux()
                                    ? sp.GetRequiredService<LinuxOpenVPNService>()
