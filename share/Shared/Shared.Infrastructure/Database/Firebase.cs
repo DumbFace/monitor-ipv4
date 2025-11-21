@@ -1,0 +1,70 @@
+using System.Net;
+using System.Net.Http.Json;
+using monitor_ip_4_tool.Constant;
+using monitor_ip_4_tool.Interfaces;
+using Newtonsoft.Json;
+
+namespace monitor_ip_4_tool.Database;
+
+public class Firebase : IDataCRUD
+{
+    private const string UrlFirebase = "https://monitor-ipv4-f0afe-default-rtdb.asia-southeast1.firebasedatabase.app/{nameNode}.json?auth={secret}";
+    private static readonly string FireBaseSecret = Environment.GetEnvironmentVariable(EnvironmentEnum.FIREBASE_SECRET);
+    private readonly HttpClient _httpClient;
+
+    private readonly ILog _logger;
+    public Firebase(ILog logger, ICustomHttpFactory customHttp)
+    {
+        _logger = logger;
+        _httpClient = customHttp.GetHttpClientDefault();
+        // _httpClient.
+    }
+
+    public async Task<string> GetLastIP(CancellationToken token = default)
+    {
+        //TODO Remove
+        _logger.Info($"FireBaseSecret: {FireBaseSecret}");
+        _logger.Info("Get IP from firebase");
+        var response = await _httpClient.GetStringAsync(BuildPath("IpLog"), token);
+        _logger.Info($"Firebase response: {response}");
+        _logger.Info($"Path: {BuildPath("IpLog")}");
+
+        var ipv4AsString = JsonConvert.DeserializeObject<IpLog>(response).Ipv4;
+
+        if (String.IsNullOrEmpty(ipv4AsString)) throw new Exception("Empty IPv4 from firebase");
+
+        return ipv4AsString;
+    }
+
+    public async Task<int> SaveIP(string ip, CancellationToken token = default)
+    {
+        IpLog ipLog = new()
+        {
+            Ipv4 = ip,
+            ModifiedAt = DateTime.Now
+        };
+        var response = await _httpClient.PutAsJsonAsync(BuildPath("IpLog"), ipLog, token);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception("Update firebase didnt success");
+        }
+        _logger.Info($"Update firebase succesc: {ipLog.ToStringJson()}");
+        return (int)HttpStatusCode.OK;
+    }
+
+
+    public static string BuildPath(string name) => UrlFirebase.Replace("{nameNode}", name).Replace("{secret}", FireBaseSecret);
+}
+
+public class IpLog
+{
+    public string Ipv4 { get; set; }
+
+    public DateTime? ModifiedAt { get; set; }
+
+    public string ToStringJson()
+    {
+        return JsonConvert.SerializeObject(this, Formatting.Indented);
+    }
+
+}
