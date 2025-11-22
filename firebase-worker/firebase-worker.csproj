@@ -29,7 +29,7 @@
         <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.0" />
       </ItemGroup>
 <ItemGroup>
-  <ProjectReference Include="..\share\Shared\Shared.csproj" />
+  <ProjectReference Include="..\share-library\Shared.csproj" />
 </ItemGroup>
 <ItemGroup>
   <None Update="appsettings.Development.json">
