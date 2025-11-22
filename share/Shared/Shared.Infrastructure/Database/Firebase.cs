@@ -17,7 +17,6 @@ public class Firebase : IDataCRUD
     {
         _logger = logger;
         _httpClient = customHttp.GetHttpClientDefault();
-        // _httpClient.
     }
 
     public async Task<string> GetLastIP(CancellationToken token = default)
