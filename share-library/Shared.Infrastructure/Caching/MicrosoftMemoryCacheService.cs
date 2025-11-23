@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Caching.Memory;
-using monitor_ip_4_tool.Interfaces;
+using Shared.Shared.Common.Interfaces;
 
-namespace monitor_ip_4_tool.Caching;
+namespace Shared.Shared.Infrastructure.Caching;
 
 public class MicrosoftMemoryCacheService : ICaching
 {

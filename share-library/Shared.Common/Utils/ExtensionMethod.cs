@@ -1,4 +1,4 @@
-namespace monitor_ip_4_tool.Utils;
+namespace Shared.Shared.Common.Utils;
 
 public static class InternetProtocolExtensions
 {

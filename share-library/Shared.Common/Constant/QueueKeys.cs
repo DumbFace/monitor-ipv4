@@ -1,4 +1,4 @@
-namespace monitor_ip_4_tool.Constant;
+namespace Shared.Shared.Common.Constant;
 
 public static class QueueKeys
 {

@@ -1,10 +1,10 @@
 using System.Net;
 using System.Net.Sockets;
-using monitor_ip_4_tool.Interfaces;
-using monitor_ip_4_tool.Models;
 using Newtonsoft.Json;
+using Shared.Shared.Common.Interfaces;
+using Shared.Shared.Common.Models;
 
-namespace monitor_ip_4_tool.Serivces;
+namespace Shared.Shared.Infrastructure.Serivces;
 
 public class IpifyService : IInternetProtocol
 {

@@ -1,13 +1,13 @@
 using System.Text;
 using Microsoft.Extensions.Options;
-using monitor_ip_4_tool.Constant;
-using monitor_ip_4_tool.Interfaces;
-using monitor_ip_4_tool.Models;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using Shared.Shared.Common.Constant;
+using Shared.Shared.Common.Interfaces;
+using Shared.Shared.Common.Models;
 
-namespace monitor_ip_4_tool.Serivces
+namespace Shared.Shared.Infrastructure.Serivces
 {
     public class RabbitMqClientServices : IMessageBroker
     {
@@ -31,7 +31,10 @@ namespace monitor_ip_4_tool.Serivces
         {
             var factory = new ConnectionFactory
             {
-                HostName = "localhost", Port = 5672, UserName = "admin", Password = "admin",
+                HostName = "localhost",
+                Port = 5672,
+                UserName = "admin",
+                Password = "admin",
             };
             var connection = await factory.CreateConnectionAsync();
             var channel = await connection.CreateChannelAsync();
@@ -73,7 +76,10 @@ namespace monitor_ip_4_tool.Serivces
         {
             var factory = new ConnectionFactory()
             {
-                HostName = "localhost", Port = 5672, UserName = "admin", Password = "admin"
+                HostName = "localhost",
+                Port = 5672,
+                UserName = "admin",
+                Password = "admin"
             };
             var connect = await factory.CreateConnectionAsync();
             var channel = await connect.CreateChannelAsync();

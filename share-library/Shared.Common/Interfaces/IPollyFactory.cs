@@ -1,6 +1,6 @@
 using Polly;
-using Polly.Registry;
-namespace monitor_ip_4_tool.Interfaces
+
+namespace Shared.Shared.Common.Interfaces
 {
     public interface IPollyFactory
     {

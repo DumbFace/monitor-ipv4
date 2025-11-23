@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Sockets;
-using monitor_ip_4_tool.Interfaces;
+using Shared.Shared.Common.Interfaces;
 
-namespace monitor_ip_4_tool.Serivces;
+namespace Shared.Shared.Infrastructure.Serivces;
 
 public class IfConfigServices : IInternetProtocol
 {

@@ -1,10 +1,10 @@
-using monitor_ip_4_tool.Interfaces;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
 using Polly.Timeout;
+using Shared.Shared.Common.Interfaces;
 
-namespace monitor_ip_4_tool.Serivces
+namespace Shared.Shared.Infrastructure.Serivces
 {
     public class PollyFactory : IPollyFactory
     {

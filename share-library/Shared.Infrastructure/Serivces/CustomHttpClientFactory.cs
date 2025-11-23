@@ -1,8 +1,7 @@
+using Shared.Shared.Common.Constant;
+using Shared.Shared.Common.Interfaces;
 
-using monitor_ip_4_tool.Constant;
-using monitor_ip_4_tool.Interfaces;
-
-namespace monitor_ip_4_tool.Serivces
+namespace Shared.Shared.Infrastructure.Serivces
 {
     public class CustomHttpClientFactory : ICustomHttpFactory
     {

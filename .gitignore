@@ -18,3 +18,4 @@ monitor-ip4-tool/*.db
 Thumbs.db
 
 .idea
+.vscode

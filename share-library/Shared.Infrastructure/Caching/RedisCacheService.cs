@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Options;
-using monitor_ip_4_tool.Interfaces;
-using monitor_ip_4_tool.Models;
 using Newtonsoft.Json;
+using Shared.Shared.Common.Interfaces;
+using Shared.Shared.Common.Models;
 using StackExchange.Redis;
 
-namespace monitor_ip_4_tool.Caching;
+namespace Shared.Shared.Infrastructure.Caching;
 
 public class RedisCacheService : ICaching, IDisposable
 {

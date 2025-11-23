@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace monitor_ip_4_tool.Models
+namespace Shared.Shared.Common.Models
 {
     public class SMTPConfig
     {

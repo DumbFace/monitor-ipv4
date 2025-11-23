@@ -1,9 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
-using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
-namespace monitor_ip_4_tool.Models;
+namespace Shared.Shared.Common.Models;
 
 public class RabbitMqConfig
 {

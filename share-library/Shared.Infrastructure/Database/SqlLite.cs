@@ -1,8 +1,7 @@
 using Microsoft.Data.Sqlite;
-using monitor_ip_4_tool.Interfaces;
-using IDatabase = monitor_ip_4_tool.Interfaces.IDatabase;
+using Shared.Shared.Common.Interfaces;
 
-namespace monitor_ip_4_tool.Database;
+namespace Shared.Shared.Infrastructure.Database;
 
 public class SqlLite : IDatabase
 {

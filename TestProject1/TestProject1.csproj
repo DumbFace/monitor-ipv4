@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
+       
 
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
@@ -26,7 +26,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\monitor-ip4-tool\monitor-ip4-tool.csproj" />
+        <ProjectReference Include="..\monitor-ipv4-tool\monitor-ipv4-tool.csproj" />
     </ItemGroup>
 
 </Project>

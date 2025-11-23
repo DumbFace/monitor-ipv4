@@ -1,10 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
-using monitor_ip_4_tool.Constant;
-using monitor_ip_4_tool.Interfaces;
 using Newtonsoft.Json;
+using Shared.Shared.Common.Constant;
+using Shared.Shared.Common.Interfaces;
 
-namespace monitor_ip_4_tool.Database;
+namespace Shared.Shared.Infrastructure.Database;
 
 public class Firebase : IDataCRUD
 {

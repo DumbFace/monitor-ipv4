@@ -2,8 +2,8 @@
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using monitor_ip_4_tool.Constant;
-using monitor_ip_4_tool.Models;
+using Shared.Shared.Common.Constant;
+using Shared.Shared.Common.Models;
 
 namespace Shared.Shared.Common.Utils
 {

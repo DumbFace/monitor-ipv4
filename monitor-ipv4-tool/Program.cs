@@ -1,16 +1,16 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using monitor_ip_4_tool.Caching;
-using monitor_ip_4_tool.Database;
-using monitor_ip_4_tool.Interfaces;
 using Microsoft.Extensions.Hosting;
-using monitor_ip_4_tool.Constant;
-using monitor_ip_4_tool.Serivces;
-using Serilog;
-using Polly;
-using monitor_ip_4_tool.Models;
 using Microsoft.Extensions.Options;
+using Polly;
+using Serilog;
+using Shared.Shared.Common.Constant;
+using Shared.Shared.Common.Interfaces;
+using Shared.Shared.Common.Models;
 using Shared.Shared.Common.Utils;
+using Shared.Shared.Infrastructure.Caching;
+using Shared.Shared.Infrastructure.Database;
+using Shared.Shared.Infrastructure.Serivces;
 
 namespace monitor_ip_4_tool;
 
