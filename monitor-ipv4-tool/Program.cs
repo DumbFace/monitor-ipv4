@@ -146,12 +146,11 @@ public class MyBackGroundService : BackgroundService
 
 
                     var sharedPath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName,
-                                            "share",
-                                            "Shared",
+                                            "share-library",
                                             "sharedsettings.json"
                                         );
-                    Console.WriteLine($"Shared Path: {sharedPath}");
                     config.AddJsonFile(sharedPath, optional: false, reloadOnChange: true);
+                    Console.WriteLine($"Shared Path: {sharedPath}");
 
                 }).ConfigureServices((context, services) =>
                 {

@@ -11,6 +11,7 @@ using Serilog;
 using Shared.Shared.Common.Constant;
 using Shared.Shared.Common.Interfaces;
 using Shared.Shared.Common.Models;
+using Shared.Shared.Common.Utils;
 using Shared.Shared.Infrastructure.Database;
 using Shared.Shared.Infrastructure.Serivces;
 using SQLitePCL;
@@ -28,6 +29,7 @@ public class FirebaseWorkerBackGroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await _messageBroker.RetryMessageAsync(stoppingToken);
         await _messageBroker.SubscribeMessageAsync(token: stoppingToken);
     }
 }
@@ -43,7 +45,13 @@ class Program
                 Console.WriteLine($"ENV: {env}");
                 var path = env == EnvironmentEnum.DEV ? "appsettings.Development.json" : "appsettings.json";
                 config.AddJsonFile(path, optional: false, reloadOnChange: true);
-                Console.WriteLine($"File: {path} ");
+                var sharedPath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName,
+                                        "share-library",
+                                        "sharedsettings.json"
+                                    );
+                config.AddJsonFile(sharedPath, optional: false, reloadOnChange: true);
+                Console.WriteLine($"Shared Path: {sharedPath}");
+
             }).ConfigureServices((context, services) =>
             {
                 services.AddSingleton<ILog, LogServices>();
@@ -54,7 +62,7 @@ class Program
                 services.AddSingleton<ICustomHttpFactory, CustomHttpClientFactory>();
 
                 // services.AddOptions<FirebaseConfig>().Bind(context.Configuration.GetSection(ConfigEnum.FIREBASE));
-
+                services.AddSharedLibrary(context.Configuration);
                 services.AddSingleton<IDataCRUD, Firebase>();
                 services.AddSingleton<IMessageBroker, RabbitMqClientServices>();
 
