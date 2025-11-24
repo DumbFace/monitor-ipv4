@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net8.0</TargetFramework>   
+        <TargetFramework>net8.0</TargetFramework>
         <RootNamespace>monitor_ip_4_tool</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
@@ -24,12 +24,12 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="*.txt">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\share-library\Shared.csproj" />
+        <ProjectReference Include="..\Shared\Shared.csproj" />
     </ItemGroup>
 
 </Project>

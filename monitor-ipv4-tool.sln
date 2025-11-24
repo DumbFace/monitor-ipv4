@@ -8,7 +8,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject1", "TestProject
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "firebase-worker", "firebase-worker\firebase-worker.csproj", "{8FEF480D-E874-4DD8-A004-FFDD6BD7F86E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "share-library\Shared.csproj", "{99543663-A1C7-4561-9032-EB6ABD49759E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{99543663-A1C7-4561-9032-EB6ABD49759E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
