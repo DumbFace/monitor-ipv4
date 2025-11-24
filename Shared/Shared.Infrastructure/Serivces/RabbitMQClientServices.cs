@@ -31,7 +31,6 @@ namespace Shared.Shared.Infrastructure.Serivces
         {
             try
             {
-
                 var factory = new ConnectionFactory
                 {
                     HostName = "localhost",
@@ -149,7 +148,7 @@ namespace Shared.Shared.Infrastructure.Serivces
             await channel.ExchangeDeclareAsync(exchange: ExchangeKeys.retry_exchange, type: ExchangeType.Direct, durable: true);
 
 
-            channel.QueueBindAsync(queue: queue.QueueName, exchange: ExchangeKeys.retry_exchange, routingKey: "task");
+            await channel.QueueBindAsync(queue: queue.QueueName, exchange: ExchangeKeys.retry_exchange, routingKey: "task");
         }
     }
 }

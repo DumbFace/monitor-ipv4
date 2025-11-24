@@ -22,15 +22,19 @@ public class FirebaseWorkerBackGroundService : BackgroundService
 {
     private readonly IMessageBroker _messageBroker;
 
-    public FirebaseWorkerBackGroundService(IMessageBroker messageBroker)
+    private readonly IMessageBusClient _messageBusClient;
+    public FirebaseWorkerBackGroundService(IMessageBroker messageBroker, IMessageBusClient messageBusClient)
     {
+        _messageBusClient = messageBusClient;
         _messageBroker = messageBroker;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await _messageBroker.RetryMessageAsync(stoppingToken);
-        await _messageBroker.SubscribeMessageAsync(token: stoppingToken);
+        var consumer = _messageBusClient.CreateSubscriber();
+        await consumer.SubscribeAsync(() => { }, stoppingToken);
+        // await _messageBroker.RetryMessageAsync(stoppingToken);
+        // await _messageBroker.SubscribeMessageAsync(token: stoppingToken);
     }
 }
 
@@ -46,7 +50,7 @@ class Program
                 var path = env == EnvironmentEnum.DEV ? "appsettings.Development.json" : "appsettings.json";
                 config.AddJsonFile(path, optional: false, reloadOnChange: true);
                 var sharedPath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName,
-                                        "share-library",
+                                        "Shared",
                                         "sharedsettings.json"
                                     );
                 config.AddJsonFile(sharedPath, optional: false, reloadOnChange: true);
@@ -61,7 +65,7 @@ class Program
                 services.AddSingleton(context.Configuration);
                 services.AddSingleton<ICustomHttpFactory, CustomHttpClientFactory>();
 
-                // services.AddOptions<FirebaseConfig>().Bind(context.Configuration.GetSection(ConfigEnum.FIREBASE));
+                services.AddSingleton<IMessageBusClient, RabbitMqMessage>();
                 services.AddSharedLibrary(context.Configuration);
                 services.AddSingleton<IDataCRUD, Firebase>();
                 services.AddSingleton<IMessageBroker, RabbitMqClientServices>();
