@@ -15,6 +15,7 @@ public class IpInfoModel
 
     //   "ip": "171.232.74.223",
     //   "hostname": "dynamic-ip-adsl.viettel.vn",
+    //   "hostname": "dynamic-ip-adsl.viettel.vn",
     //   "city": "Ho Chi Minh City",
     //   "region": "Ho Chi Minh City (HCMC)",
     //   "country": "VN",

@@ -20,21 +20,36 @@ namespace firebase_worker;
 
 public class FirebaseWorkerBackGroundService : BackgroundService
 {
-    private readonly IMessageBroker _messageBroker;
-
+    private readonly IDataCRUD _firebase;
     private readonly IMessageBusClient _messageBusClient;
-    public FirebaseWorkerBackGroundService(IMessageBroker messageBroker, IMessageBusClient messageBusClient)
+
+    private readonly ILog _logger;
+
+    readonly private IMessageBusConnection<IConnection> _rabbitConnection;
+    public FirebaseWorkerBackGroundService(
+
+        ILog logger,
+        IMessageBusConnection<IConnection> rabbitConnection,
+        IDataCRUD firebase,
+        IMessageBusClient messageBusClient)
     {
+        _logger = logger;
+        _rabbitConnection = rabbitConnection;
+        _firebase = firebase;
         _messageBusClient = messageBusClient;
-        _messageBroker = messageBroker;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var ip = await _firebase.GetLastIP(stoppingToken);
         var consumer = _messageBusClient.CreateSubscriber();
-        await consumer.SubscribeAsync(() => { }, stoppingToken);
-        // await _messageBroker.RetryMessageAsync(stoppingToken);
-        // await _messageBroker.SubscribeMessageAsync(token: stoppingToken);
+        var connection = await _rabbitConnection.GetConnectionAsync();
+        var channel = await connection.CreateChannelAsync();
+        var rabbitMqOptions = new RabbitMqOptions(RabbitMqMessageKeys.IP_CHANGED);
+        await consumer.SubscribeAsync<string, RabbitMqOptions>(async (ipv4) =>
+        {
+            await _firebase.SaveIP(ipv4, stoppingToken);
+        }, rabbitMqOptions, stoppingToken);
     }
 }
 
@@ -65,11 +80,11 @@ class Program
                 services.AddSingleton(context.Configuration);
                 services.AddSingleton<ICustomHttpFactory, CustomHttpClientFactory>();
 
+                services.AddSingleton<IMessageBusConnection<IConnection>, RabbitMQConnection>();
+
                 services.AddSingleton<IMessageBusClient, RabbitMqMessage>();
                 services.AddSharedLibrary(context.Configuration);
                 services.AddSingleton<IDataCRUD, Firebase>();
-                services.AddSingleton<IMessageBroker, RabbitMqClientServices>();
-
                 services.AddHostedService<FirebaseWorkerBackGroundService>();
             }).Build();
 

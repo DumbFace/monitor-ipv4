@@ -7,9 +7,9 @@ namespace Shared.Shared.Infrastructure.Serivces
     public class RabbitMqMessage : IMessageBusClient
     {
         readonly private ILog _logger;
-        readonly private IConnection _connection;
+        readonly private IMessageBusConnection<IConnection> _connection;
 
-        public RabbitMqMessage(IConnection connection, ILog logger)
+        public RabbitMqMessage(IMessageBusConnection<IConnection> connection, ILog logger)
         {
             _connection = connection;
             _logger = logger;
@@ -24,8 +24,6 @@ namespace Shared.Shared.Infrastructure.Serivces
         {
 
             return new RabbitMqSubscriber(_connection, _logger);
-
         }
-
     }
 }

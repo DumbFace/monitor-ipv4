@@ -1,81 +1,72 @@
-using System.ComponentModel;
 using System.Text;
+using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using Shared.Shared.Common.Constant;
 using Shared.Shared.Common.Interfaces;
+using Shared.Shared.Common.Models;
 
 namespace Shared.Shared.Infrastructure.Serivces
 {
     public class RabbitMqSubscriber : ISubscriber
     {
-        readonly private IConnection _connection;
+        readonly private IMessageBusConnection<IConnection> _rabbitConnection;
         readonly private ILog _logger;
 
         public RabbitMqSubscriber(
-            IConnection connection,
+            IMessageBusConnection<IConnection> rabbitConnection,
             ILog logger
             )
         {
             _logger = logger;
-            _connection = connection;
+            _rabbitConnection = rabbitConnection;
         }
 
-        public async Task SubscribeAsync(Action handler, CancellationToken token = default)
+        public async Task SubscribeAsync<T, TConfig>(Func<T, Task> handler, TConfig config, CancellationToken token = default) where TConfig : IMessagingOptions
         {
-            var channel = await _connection.CreateChannelAsync();
+            var option = config as RabbitMqOptions
+                             ?? throw new InvalidOperationException("Config must be RabbitMqOptions.");
+            var connection = await _rabbitConnection.GetConnectionAsync();
+            var channel = await connection.CreateChannelAsync();
             try
             {
-                var exchange = $"{RabbitMqMessageKeys.IP_CHANGED}.exchange";
-                var retryExchange = $"{RabbitMqMessageKeys.IP_CHANGED}.retry-exchange";
-                var routing = $"{RabbitMqMessageKeys.IP_CHANGED}.routing";
-                var queue = $"{RabbitMqMessageKeys.IP_CHANGED}.queue";
-                var queueRetry = $"{RabbitMqMessageKeys.IP_CHANGED}.retry";
-
-
-
                 var queueRetryArg = new Dictionary<string, object>
                     {
-                        { "x-dead-letter-exchange", exchange },
+                        { "x-dead-letter-exchange", option.Exchange },
                         { "x-message-ttl", 5000 },
                     };
 
                 var queueArg = new Dictionary<string, object>
                     {
-                    { "x-dead-letter-exchange", retryExchange }
+                    { "x-dead-letter-exchange", option.ExchangeRetry }
                     };
+                await channel.BasicQosAsync(0, 1, false);
 
                 await channel.QueueDeclareAsync(
-                    queue: queueRetry, durable: true,
+                    queue: option.QueueRetry, durable: true,
                     exclusive: false, autoDelete: false, arguments: queueRetryArg);
-                await channel.ExchangeDeclareAsync(exchange: retryExchange, type: ExchangeType.Direct, durable: true);
+                await channel.ExchangeDeclareAsync(exchange: option.ExchangeRetry, type: ExchangeType.Direct, durable: true);
 
-                await channel.QueueBindAsync(queue: queueRetry, exchange: retryExchange, routingKey: routing);
+                await channel.QueueBindAsync(queue: option.QueueRetry, exchange: option.ExchangeRetry, routingKey: option.RoutingKey);
 
                 await channel.BasicQosAsync(0, 1, false);
 
-                await channel.ExchangeDeclareAsync(exchange: exchange, type: ExchangeType.Direct, durable: true);
+                await channel.ExchangeDeclareAsync(exchange: option.Exchange, type: ExchangeType.Direct, durable: true);
 
                 await channel.QueueDeclareAsync(
-                   queue: queue, durable: true,
+                   queue: option.Queue, durable: true,
                    exclusive: false, autoDelete: false, arguments: queueArg);
-                await channel.QueueBindAsync(queue: queue, exchange: exchange,
-                    routingKey: routing);
+                await channel.QueueBindAsync(queue: option.Queue, exchange: option.Exchange,
+                    routingKey: option.RoutingKey);
                 var consumer = new AsyncEventingBasicConsumer(channel);
+
                 consumer.ReceivedAsync += async (model, ea) =>
                 {
                     try
                     {
-                        var body = ea.Body.ToArray();
-                        var ipv4 = Encoding.UTF8.GetString(body);
-                        if (String.IsNullOrEmpty(ipv4)) throw new Exception("Ipv4 is null or empty ");
-                        //TODO update firebase
-                        _logger.Info($"Processing update firebase");
-
-                        await Task.Delay(5000);
-                        throw new Exception();
-                        // await _firebase.SaveIP(ipv4);
-                        // _logger.Info($"Updated firebase successfully");
+                        var bodyBytes = ea.Body.ToArray();
+                        var bodyString = Encoding.UTF8.GetString(bodyBytes);
+                        var data = JsonConvert.DeserializeObject<T>(bodyString);
+                        await handler(data);
                         await channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false);
                     }
                     catch (Exception e)
@@ -86,7 +77,7 @@ namespace Shared.Shared.Infrastructure.Serivces
                     }
                 };
 
-                await channel.BasicConsumeAsync(queue, autoAck: false, consumer: consumer);
+                await channel.BasicConsumeAsync(option.Queue, autoAck: false, consumer: consumer);
 
             }
             catch (Exception e)

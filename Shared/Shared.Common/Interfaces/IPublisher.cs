@@ -1,8 +1,10 @@
+using Shared.Shared.Common.Models;
+
 namespace Shared.Shared.Common.Interfaces
 {
     public interface IPublisher
     {
-        Task PublishAsync(string queue, object data, CancellationToken token = default);
+        Task PublishAsync<T, TConfig>(T data, TConfig option, CancellationToken token = default) where TConfig : IMessagingOptions;
 
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Polly;
+using RabbitMQ.Client;
 using Serilog;
 using Shared.Shared.Common.Constant;
 using Shared.Shared.Common.Interfaces;
@@ -26,16 +27,14 @@ public class MyBackGroundService : BackgroundService
     private readonly IOpenVPN _openVPN;
     readonly IOptionsMonitor<SystemConfig> _systemConfigMonitor;
     private readonly ResiliencePipeline _pipeline;
-    private readonly IMessageBroker _messageBroker;
     private readonly IMessageBusClient _messageBusClient;
 
     public MyBackGroundService(IOpenVPN openVPN, ICaching memoryCache, IDatabase database, ILog logger,
         IEnumerable<IInternetProtocol> ipv4Services, ISendMail smtpService, IRetryHandler retryHandler,
-        IPollyFactory pollyFactory, IOptionsMonitor<SystemConfig> systemConfigMonitor, IMessageBroker messageBroker,
+        IPollyFactory pollyFactory, IOptionsMonitor<SystemConfig> systemConfigMonitor,
         IMessageBusClient messageBusClient)
     {
         _messageBusClient = messageBusClient;
-        _messageBroker = messageBroker;
         _openVPN = openVPN;
         _systemConfigMonitor = systemConfigMonitor;
         _pipeline = pollyFactory.GetIPServicesPipeLine();
@@ -112,7 +111,9 @@ public class MyBackGroundService : BackgroundService
                     continue;
                 //Durable data state
                 var producer = _messageBusClient.CreatePublisher();
-                await producer.PublishAsync(RabbitMqMessageKeys.IP_CHANGED, ipFromService);
+
+                var rabbitOption = new RabbitMqOptions(RabbitMqMessageKeys.IP_CHANGED);
+                await producer.PublishAsync(ipFromService, rabbitOption, stoppingToken);
                 // await _messageBroker.PublishMessageAsync(ipFromService);
 
                 await _database.ConnectDb();
@@ -186,11 +187,9 @@ public class MyBackGroundService : BackgroundService
                     services.AddSingleton<LinuxOpenVPNService>();
                     services.AddSingleton<WindowOpenVPNService>();
                     services.AddSingleton<IDataCRUD, Firebase>();
-                    services.AddSingleton<IMessageBroker, RabbitMqClientServices>();
+                    services.AddSingleton<IMessageBusConnection<IConnection>, RabbitMQConnection>();
+
                     services.AddSingleton<IMessageBusClient, RabbitMqMessage>();
-
-                    // services.AddSingleton<IMessageBusConnection, RabbitMqC>();
-
                     services.AddSingleton<IPublisher, RabbitMqPublisher>();
                     services.AddSingleton<ISubscriber, RabbitMqSubscriber>();
 
