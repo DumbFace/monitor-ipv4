@@ -1,5 +1,4 @@
-﻿using Castle.DynamicProxy;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -56,6 +55,7 @@ public class MyBackGroundService : BackgroundService
 
             try
             {
+                //TODO Remove uncomment later
                 // string ipFromService = await _pipeline.ExecuteAsync<string>(async (token) =>
                 // {
                 //     string ipv4 = String.Empty;
@@ -66,7 +66,7 @@ public class MyBackGroundService : BackgroundService
                 //             ipv4 = await service.GetIP4Async(token);
                 //             if (!String.IsNullOrEmpty(ipv4)) return ipv4;
                 //         }
-                //
+
                 //         catch (Exception ex)
                 //         {
                 //             _logger.Error($"Error IPv4 service: {ex.Message}");
@@ -76,6 +76,7 @@ public class MyBackGroundService : BackgroundService
                 //     return ipv4;
                 // });
 
+                //TODO Remove later
                 string ipFromService = "192.168.1.1";
 
                 if (String.IsNullOrEmpty(ipFromService))
@@ -109,12 +110,11 @@ public class MyBackGroundService : BackgroundService
 
                 if (lastIp == ipFromService)
                     continue;
-                //Durable data state
                 var producer = _messageBusClient.CreatePublisher();
-
                 var rabbitOption = new RabbitMqOptions(RabbitMqMessageKeys.IP_CHANGED);
-                await producer.PublishAsync(ipFromService, rabbitOption, stoppingToken);
-                // await _messageBroker.PublishMessageAsync(ipFromService);
+
+                //TODO change ipFromCaching to IpFromService
+                await producer.PublishAsync(ipFromCaching, rabbitOption, stoppingToken);
 
                 await _database.ConnectDb();
 
@@ -127,6 +127,7 @@ public class MyBackGroundService : BackgroundService
                 _logger.Info("Update client openvpn");
                 _logger.Info("Restart Service successfully");
 
+                //TODO do not remove, uncomment later
                 // await _openVPN.UpdateClient(ipFromService);
                 // await _openVPN.RestartService(OperatingSystem.IsLinux() ?
                 //     _systemConfigMonitor.CurrentValue.LinuxOperating.OpenVPNService :
@@ -170,7 +171,10 @@ public class MyBackGroundService : BackgroundService
                     services.AddSingleton<ISendMail, SMTPService>();
 
                     //Alternative redis caching 
+                    //Using for console server
                     services.AddSingleton<ICaching, RedisCacheService>();
+
+                    //Using for console client
                     //    services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
                     services.AddSingleton<IInternetProtocol, IfConfigServices>();
                     services.AddSingleton<IInternetProtocol, IpifyService>();
@@ -182,7 +186,6 @@ public class MyBackGroundService : BackgroundService
                     services.AddOptions<RedisConfig>().Bind(context.Configuration.GetSection(ConfigEnum.REDIS));
                     services.AddOptions<SMTPConfig>().Bind(context.Configuration.GetSection(ConfigEnum.SMTP));
                     services.AddSharedLibrary(context.Configuration);
-                    // services.AddOptions<RabbitMqConfig>().Bind(context.Configuration.GetSection(ConfigEnum.RABBITMQ));
 
                     services.AddSingleton<LinuxOpenVPNService>();
                     services.AddSingleton<WindowOpenVPNService>();

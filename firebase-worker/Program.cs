@@ -48,6 +48,11 @@ public class FirebaseWorkerBackGroundService : BackgroundService
         var rabbitMqOptions = new RabbitMqOptions(RabbitMqMessageKeys.IP_CHANGED);
         await consumer.SubscribeAsync<string, RabbitMqOptions>(async (ipv4) =>
         {
+            // _logger.Info($"Receive new IP from queue: {ipv4}");
+            // _logger.Info($"Update IP in Firebase from {ip} to {ipv4}");
+
+            // await Task.Delay(5000);
+            // throw new Exception("Test retry mechanism in subscriber.");
             await _firebase.SaveIP(ipv4, stoppingToken);
         }, rabbitMqOptions, stoppingToken);
     }

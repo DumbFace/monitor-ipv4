@@ -40,6 +40,9 @@ namespace Shared.Shared.Infrastructure.Serivces
 
             await channel.BasicPublishAsync(exchange: rabbitOption.Exchange, routingKey: rabbitOption.RoutingKey, mandatory: true,
                 basicProperties: properties, body: body);
+
+            _logger.Info($"Send message to queue:  {body}");
+
         }
     }
 }

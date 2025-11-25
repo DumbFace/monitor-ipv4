@@ -66,6 +66,7 @@ namespace Shared.Shared.Infrastructure.Serivces
                         var bodyBytes = ea.Body.ToArray();
                         var bodyString = Encoding.UTF8.GetString(bodyBytes);
                         var data = JsonConvert.DeserializeObject<T>(bodyString);
+                        _logger.Info($"Received message from queue. {data}");
                         await handler(data);
                         await channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false);
                     }
