@@ -38,8 +38,6 @@ namespace Shared.Shared.Infrastructure.Serivces
             return builder.Build();
         }
 
-
-        //Default Pipeline
         public ResiliencePipeline GetPipeLine()
         {
             var builder = new ResiliencePipelineBuilder();
@@ -49,8 +47,6 @@ namespace Shared.Shared.Infrastructure.Serivces
             builder.AddBreakCircuitDefault(_logger);
             return builder.Build();
         }
-
-
     }
 
     public static class PollyExtension

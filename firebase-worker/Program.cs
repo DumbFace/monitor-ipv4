@@ -23,36 +23,21 @@ public class FirebaseWorkerBackGroundService : BackgroundService
     private readonly IDataCRUD _firebase;
     private readonly IMessageBusClient _messageBusClient;
 
-    private readonly ILog _logger;
-
-    readonly private IMessageBusConnection<IConnection> _rabbitConnection;
     public FirebaseWorkerBackGroundService(
 
-        ILog logger,
-        IMessageBusConnection<IConnection> rabbitConnection,
         IDataCRUD firebase,
         IMessageBusClient messageBusClient)
     {
-        _logger = logger;
-        _rabbitConnection = rabbitConnection;
         _firebase = firebase;
         _messageBusClient = messageBusClient;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var ip = await _firebase.GetLastIP(stoppingToken);
         var consumer = _messageBusClient.CreateSubscriber();
-        var connection = await _rabbitConnection.GetConnectionAsync();
-        var channel = await connection.CreateChannelAsync();
         var rabbitMqOptions = new RabbitMqOptions(RabbitMqMessageKeys.IP_CHANGED);
         await consumer.SubscribeAsync<string, RabbitMqOptions>(async (ipv4) =>
         {
-            // _logger.Info($"Receive new IP from queue: {ipv4}");
-            // _logger.Info($"Update IP in Firebase from {ip} to {ipv4}");
-
-            // await Task.Delay(5000);
-            // throw new Exception("Test retry mechanism in subscriber.");
             await _firebase.SaveIP(ipv4, stoppingToken);
         }, rabbitMqOptions, stoppingToken);
     }

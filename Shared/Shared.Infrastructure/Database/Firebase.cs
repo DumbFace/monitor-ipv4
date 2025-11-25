@@ -21,9 +21,6 @@ public class Firebase : IDataCRUD
 
     public async Task<string> GetLastIP(CancellationToken token = default)
     {
-        //TODO Remove
-        _logger.Info($"FireBaseSecret: {FireBaseSecret}");
-        _logger.Info("Get IP from firebase");
         var response = await _httpClient.GetStringAsync(BuildPath("IpLog"), token);
         _logger.Info($"Firebase response: {response}");
         _logger.Info($"Path: {BuildPath("IpLog")}");
@@ -47,7 +44,7 @@ public class Firebase : IDataCRUD
         {
             throw new Exception("Update firebase didnt success");
         }
-        _logger.Info($"Update firebase succesc: {ipLog.ToStringJson()}");
+        _logger.Info($"Update firebase successful: {ipLog.ToStringJson()}");
         return (int)HttpStatusCode.OK;
     }
 

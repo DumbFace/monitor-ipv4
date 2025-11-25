@@ -55,29 +55,25 @@ public class MyBackGroundService : BackgroundService
 
             try
             {
-                //TODO Remove uncomment later
-                // string ipFromService = await _pipeline.ExecuteAsync<string>(async (token) =>
-                // {
-                //     string ipv4 = String.Empty;
-                //     foreach (var service in _ipv4Services)
-                //     {
-                //         try
-                //         {
-                //             ipv4 = await service.GetIP4Async(token);
-                //             if (!String.IsNullOrEmpty(ipv4)) return ipv4;
-                //         }
+                string ipFromService = await _pipeline.ExecuteAsync<string>(async (token) =>
+                {
+                    string ipv4 = String.Empty;
+                    foreach (var service in _ipv4Services)
+                    {
+                        try
+                        {
+                            ipv4 = await service.GetIP4Async(token);
+                            if (!String.IsNullOrEmpty(ipv4)) return ipv4;
+                        }
 
-                //         catch (Exception ex)
-                //         {
-                //             _logger.Error($"Error IPv4 service: {ex.Message}");
-                //             Thread.Sleep(ThreadSleep.MONITOR_IP * 1000);
-                //         }
-                //     }
-                //     return ipv4;
-                // });
-
-                //TODO Remove later
-                string ipFromService = "192.168.1.1";
+                        catch (Exception ex)
+                        {
+                            _logger.Error($"Error IPv4 service: {ex.Message}");
+                            Thread.Sleep(ThreadSleep.MONITOR_IP * 1000);
+                        }
+                    }
+                    return ipv4;
+                });
 
                 if (String.IsNullOrEmpty(ipFromService))
                 {
@@ -113,8 +109,7 @@ public class MyBackGroundService : BackgroundService
                 var producer = _messageBusClient.CreatePublisher();
                 var rabbitOption = new RabbitMqOptions(RabbitMqMessageKeys.IP_CHANGED);
 
-                //TODO change ipFromCaching to IpFromService
-                await producer.PublishAsync(ipFromCaching, rabbitOption, stoppingToken);
+                await producer.PublishAsync(ipFromService, rabbitOption, stoppingToken);
 
                 await _database.ConnectDb();
 
@@ -127,11 +122,10 @@ public class MyBackGroundService : BackgroundService
                 _logger.Info("Update client openvpn");
                 _logger.Info("Restart Service successfully");
 
-                //TODO do not remove, uncomment later
-                // await _openVPN.UpdateClient(ipFromService);
-                // await _openVPN.RestartService(OperatingSystem.IsLinux() ?
-                //     _systemConfigMonitor.CurrentValue.LinuxOperating.OpenVPNService :
-                //     _systemConfigMonitor.CurrentValue.WindowOperating.OpenVPNService);
+                await _openVPN.UpdateClient(ipFromService);
+                await _openVPN.RestartService(OperatingSystem.IsLinux() ?
+                    _systemConfigMonitor.CurrentValue.LinuxOperating.OpenVPNService :
+                    _systemConfigMonitor.CurrentValue.WindowOperating.OpenVPNService);
             }
             catch (Exception ex)
             {
