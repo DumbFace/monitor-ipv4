@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -9,6 +9,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "firebase-worker", "firebase-worker\firebase-worker.csproj", "{8FEF480D-E874-4DD8-A004-FFDD6BD7F86E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{99543663-A1C7-4561-9032-EB6ABD49759E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "monitor-ipv4-client", "monitor-ipv4-client\monitor-ipv4-client.csproj", "{05B03EA7-3C8A-4394-B89A-2DE7210B1402}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +34,10 @@ Global
 		{99543663-A1C7-4561-9032-EB6ABD49759E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{99543663-A1C7-4561-9032-EB6ABD49759E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{99543663-A1C7-4561-9032-EB6ABD49759E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05B03EA7-3C8A-4394-B89A-2DE7210B1402}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05B03EA7-3C8A-4394-B89A-2DE7210B1402}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05B03EA7-3C8A-4394-B89A-2DE7210B1402}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05B03EA7-3C8A-4394-B89A-2DE7210B1402}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

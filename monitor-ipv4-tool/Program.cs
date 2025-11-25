@@ -111,21 +111,23 @@ public class MyBackGroundService : BackgroundService
 
                 await producer.PublishAsync(ipFromService, rabbitOption, stoppingToken);
 
-                await _database.ConnectDb();
-
-                await _retryHandler.ExecuteAsync((token) =>
-                    _smtpService.SendMail(token, subject: "IP has changed", body: ipFromService));
-                _memoryCache.Set(Cachekeys.LAST_IP, ipFromService, null);
-                await _database.SaveIP(ipFromService);
-                await _database.CloseDb();
-
-                _logger.Info("Update client openvpn");
-                _logger.Info("Restart Service successfully");
 
                 await _openVPN.UpdateClient(ipFromService);
                 await _openVPN.RestartService(OperatingSystem.IsLinux() ?
                     _systemConfigMonitor.CurrentValue.LinuxOperating.OpenVPNService :
                     _systemConfigMonitor.CurrentValue.WindowOperating.OpenVPNService);
+                await _retryHandler.ExecuteAsync((token) =>
+                    _smtpService.SendMail(token, subject: "IP has changed", body: ipFromService));
+
+
+                await _database.ConnectDb();
+                await _database.SaveIP(ipFromService);
+                await _database.CloseDb();
+
+                _memoryCache.Set(Cachekeys.LAST_IP, ipFromService, null);
+
+                _logger.Info("Update client openvpn");
+                _logger.Info("Restart Service successfully");
             }
             catch (Exception ex)
             {
@@ -142,17 +144,10 @@ public class MyBackGroundService : BackgroundService
                 .ConfigureAppConfiguration((context, config) =>
                 {
                     var env = context.HostingEnvironment.EnvironmentName;
-                    Console.WriteLine($"ENV: {env}");
                     var path = env == EnvironmentEnum.DEV ? "appsettings.Development.json" : "appsettings.json";
                     config.AddJsonFile(path, optional: false, reloadOnChange: true);
-
-
-                    var sharedPath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName,
-                                            "Shared",
-                                            "sharedsettings.json"
-                                        );
+                    var sharedPath = Path.Combine(AppContext.BaseDirectory, "sharedsettings.json");
                     config.AddJsonFile(sharedPath, optional: false, reloadOnChange: true);
-                    Console.WriteLine($"Shared Path: {sharedPath}");
 
                 }).ConfigureServices((context, services) =>
                 {

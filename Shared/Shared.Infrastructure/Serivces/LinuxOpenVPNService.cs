@@ -8,7 +8,7 @@ namespace Shared.Shared.Infrastructure.Serivces
     public class LinuxOpenVPNService : IOpenVPN
     {
 
-    private static readonly string AppPath = AppContext.BaseDirectory;
+        private static readonly string AppPath = AppContext.BaseDirectory;
         private readonly ILog _logger;
         private readonly IOptionsMonitor<SystemConfig> _systemConfigMonitor;
 
@@ -35,9 +35,9 @@ namespace Shared.Shared.Infrastructure.Serivces
                 _operatingConfig = _systemConfigMonitor.CurrentValue.LinuxOperating;
                 try
                 {
-                    Func<string,string> GetAppPath = (nameFile) =>
+                    Func<string, string> GetAppPath = (nameFile) =>
                     {
-                        return Path.Combine(AppContext.BaseDirectory,nameFile);   
+                        return Path.Combine(AppContext.BaseDirectory, nameFile);
                     };
 
                     var caContent = File.ReadAllText(GetAppPath("ca.txt"));
@@ -54,7 +54,7 @@ namespace Shared.Shared.Infrastructure.Serivces
                     _logger.Info($"Write myconfig.conf successfull at {_operatingConfig.DirectoryOpenVPN}");
 
 
-                   var accountClient = File.ReadAllText(GetAppPath("password.txt"));
+                    var accountClient = File.ReadAllText(GetAppPath("password.txt"));
                     var newAccountClient = accountClient.Replace("{username}", _operatingConfig.UserName)
                                                           .Replace("{password}", _operatingConfig.Password);
 
