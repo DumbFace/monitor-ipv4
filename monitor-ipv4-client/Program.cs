@@ -134,12 +134,12 @@ public class Program
 
                 //Alternative redis caching 
                 //Using for console server
-                services.AddOptions<RedisConfig>().Bind(context.Configuration.GetSection(ConfigEnum.REDIS))
-                        .ValidateDataAnnotations().ValidateOnStart();
-                services.AddSingleton<ICaching, RedisCacheService>();
+                // services.AddOptions<RedisConfig>().Bind(context.Configuration.GetSection(ConfigEnum.REDIS))
+                //         .ValidateDataAnnotations().ValidateOnStart();
+                // services.AddSingleton<ICaching, RedisCacheService>();
 
                 //Using for console client
-                // services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
+                services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
                 services.AddSingleton<IDatabase, SqlLite>();
                 services.AddSingleton<ICustomHttpFactory, CustomHttpClientFactory>();
 
