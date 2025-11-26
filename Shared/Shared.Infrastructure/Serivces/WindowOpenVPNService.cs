@@ -1,5 +1,7 @@
 using System.ServiceProcess;
+
 using Microsoft.Extensions.Options;
+
 using Shared.Shared.Common.Interfaces;
 using Shared.Shared.Common.Models;
 
@@ -26,7 +28,7 @@ namespace Shared.Shared.Infrastructure.Serivces
         {
             await Task.Run(() =>
             {
-                #pragma warning disable CA1416 
+#pragma warning disable CA1416
 
                 ServiceController service = new ServiceController(serviceName);
                 TimeSpan timeout = TimeSpan.FromMilliseconds(timeoutMilliseconds);
@@ -42,7 +44,7 @@ namespace Shared.Shared.Infrastructure.Serivces
 
                 _logger.Info($"Restart Service Openvpn Window Successful at {DateTime.Now}");
 
-                #pragma warning restore CA1416 
+#pragma warning restore CA1416
 
             });
 

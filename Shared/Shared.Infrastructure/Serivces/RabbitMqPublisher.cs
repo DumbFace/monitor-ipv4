@@ -1,6 +1,9 @@
 using System.Text;
+
 using Newtonsoft.Json;
+
 using RabbitMQ.Client;
+
 using Shared.Shared.Common.Interfaces;
 using Shared.Shared.Common.Models;
 

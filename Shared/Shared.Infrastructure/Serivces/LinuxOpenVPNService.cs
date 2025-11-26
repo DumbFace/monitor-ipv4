@@ -1,5 +1,7 @@
 using System.Diagnostics;
+
 using Microsoft.Extensions.Options;
+
 using Shared.Shared.Common.Interfaces;
 using Shared.Shared.Common.Models;
 

@@ -1,7 +1,9 @@
 
 
 using Microsoft.Extensions.Options;
+
 using RabbitMQ.Client;
+
 using Shared.Shared.Common.Interfaces;
 using Shared.Shared.Common.Models;
 namespace Shared.Shared.Infrastructure.Serivces

@@ -2,8 +2,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+
 using Polly;
+
 using Serilog;
+
 using Shared.Shared.Common.Constant;
 using Shared.Shared.Common.Interfaces;
 using Shared.Shared.Common.Models;

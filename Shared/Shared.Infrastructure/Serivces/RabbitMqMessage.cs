@@ -1,5 +1,6 @@
 
 using RabbitMQ.Client;
+
 using Shared.Shared.Common.Interfaces;
 
 namespace Shared.Shared.Infrastructure.Serivces

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Caching.Memory;
+
 using Shared.Shared.Common.Interfaces;
 
 namespace Shared.Shared.Infrastructure.Caching;

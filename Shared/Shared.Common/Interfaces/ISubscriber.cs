@@ -1,4 +1,3 @@
-using System;
 using Shared.Shared.Common.Models;
 
 namespace Shared.Shared.Common.Interfaces

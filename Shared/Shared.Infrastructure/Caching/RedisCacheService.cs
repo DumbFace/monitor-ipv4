@@ -1,7 +1,10 @@
 using Microsoft.Extensions.Options;
+
 using Newtonsoft.Json;
+
 using Shared.Shared.Common.Interfaces;
 using Shared.Shared.Common.Models;
+
 using StackExchange.Redis;
 
 namespace Shared.Shared.Infrastructure.Caching;

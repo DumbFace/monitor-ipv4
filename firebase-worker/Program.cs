@@ -1,20 +1,17 @@
-﻿using System.Runtime.InteropServices;
-using System.Text;
-using Castle.DynamicProxy;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
 using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
+
 using Serilog;
+
 using Shared.Shared.Common.Constant;
 using Shared.Shared.Common.Interfaces;
 using Shared.Shared.Common.Models;
 using Shared.Shared.Common.Utils;
 using Shared.Shared.Infrastructure.Database;
 using Shared.Shared.Infrastructure.Serivces;
-using SQLitePCL;
 
 namespace firebase_worker;
 
@@ -54,12 +51,8 @@ class Program
                 Console.WriteLine($"ENV: {env}");
                 var path = env == EnvironmentEnum.DEV ? "appsettings.Development.json" : "appsettings.json";
                 config.AddJsonFile(path, optional: false, reloadOnChange: true);
-                var sharedPath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName,
-                                        "Shared",
-                                        "sharedsettings.json"
-                                    );
+                var sharedPath = Path.Combine(AppContext.BaseDirectory, "sharedsettings.json");
                 config.AddJsonFile(sharedPath, optional: false, reloadOnChange: true);
-                Console.WriteLine($"Shared Path: {sharedPath}");
 
             }).ConfigureServices((context, services) =>
             {

@@ -1,5 +1,6 @@
 using Serilog;
 using Serilog.Events;
+
 using Shared.Shared.Common.Interfaces;
 
 namespace Shared.Shared.Infrastructure.Serivces;

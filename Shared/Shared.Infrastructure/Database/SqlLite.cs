@@ -1,4 +1,5 @@
 using Microsoft.Data.Sqlite;
+
 using Shared.Shared.Common.Interfaces;
 
 namespace Shared.Shared.Infrastructure.Database;

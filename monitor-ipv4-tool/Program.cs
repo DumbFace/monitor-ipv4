@@ -2,9 +2,13 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+
 using Polly;
+
 using RabbitMQ.Client;
+
 using Serilog;
+
 using Shared.Shared.Common.Constant;
 using Shared.Shared.Common.Interfaces;
 using Shared.Shared.Common.Models;
@@ -12,7 +16,6 @@ using Shared.Shared.Common.Utils;
 using Shared.Shared.Infrastructure.Caching;
 using Shared.Shared.Infrastructure.Database;
 using Shared.Shared.Infrastructure.Serivces;
-
 namespace monitor_ip_4_tool;
 
 public class MyBackGroundService : BackgroundService
