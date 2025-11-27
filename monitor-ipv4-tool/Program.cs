@@ -158,25 +158,21 @@ public class MyBackGroundService : BackgroundService
 
                     services.AddSingleton<IPollyFactory, PollyFactory>();
                     services.AddSingleton<IRetryHandler, RetryServices>();
-
+                    services.AddOptions<SystemConfig>().Bind(context.Configuration.GetSection(ConfigEnum.SYSTEM))
+                        .ValidateDataAnnotations().ValidateOnStart();
+                    services.AddOptions<RedisConfig>().Bind(context.Configuration.GetSection(ConfigEnum.REDIS));
+                    services.AddOptions<SMTPConfig>().Bind(context.Configuration.GetSection(ConfigEnum.SMTP));
                     services.AddSingleton(context.Configuration);
                     services.AddSingleton<ISendMail, SMTPService>();
 
                     //Alternative redis caching 
                     //Using for console server
                     services.AddSingleton<ICaching, RedisCacheService>();
-
-                    //Using for console client
-                    //    services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
                     services.AddSingleton<IInternetProtocol, IfConfigServices>();
                     services.AddSingleton<IInternetProtocol, IpifyService>();
                     services.AddSingleton<IDatabase, SqlLite>();
                     services.AddSingleton<ICustomHttpFactory, CustomHttpClientFactory>();
 
-                    services.AddOptions<SystemConfig>().Bind(context.Configuration.GetSection(ConfigEnum.SYSTEM))
-                        .ValidateDataAnnotations().ValidateOnStart();
-                    services.AddOptions<RedisConfig>().Bind(context.Configuration.GetSection(ConfigEnum.REDIS));
-                    services.AddOptions<SMTPConfig>().Bind(context.Configuration.GetSection(ConfigEnum.SMTP));
                     services.AddSharedLibrary(context.Configuration);
 
                     services.AddSingleton<LinuxOpenVPNService>();

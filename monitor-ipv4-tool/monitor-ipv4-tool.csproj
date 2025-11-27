@@ -9,15 +9,15 @@
 
     <ItemGroup>
         <None Update="appsettings.Development.json" Condition="'$(Configuration)' == 'Debug'">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
 
-        <None Update="appsettings.json" Condition="'$(Configuration)' == 'Production'">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        <None Update="appsettings.json" Condition="'$(Configuration)' == 'Release'">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
 
         <None Include="..\Shared\*.txt;..\Shared\client.ovpn;..\Shared\sharedsettings.json">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
 

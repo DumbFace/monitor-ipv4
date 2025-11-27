@@ -7,11 +7,15 @@ namespace Shared.Shared.Infrastructure.Caching;
 public class MicrosoftMemoryCacheService : ICaching
 {
     private readonly IMemoryCache _caching;
-
-    public MicrosoftMemoryCacheService()
+    private readonly ILog _logger;
+    public MicrosoftMemoryCacheService(
+        ILog logger
+    )
     {
+        _logger = logger;
         var options = new MemoryCacheOptions();
         _caching = new MemoryCache(options);
+        _logger.Info("Init Memory Cache Service");
     }
 
     public T Get<T>(string key)
