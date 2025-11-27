@@ -1,20 +1,16 @@
 using Serilog;
-using Serilog.Events;
 
 using Shared.Shared.Common.Interfaces;
-
 namespace Shared.Shared.Infrastructure.Serivces;
 
 public class LogServices : ILog, IDisposable
 {
-    private readonly ILogger _logger;
     string path = AppContext.BaseDirectory;
-    public LogServices()
+    private readonly ILogger _logger;
+
+    public LogServices(ILogger configuration)
     {
-        _logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.Console().WriteTo.File($"{path}/logs/log-.txt",
-            rollingInterval: RollingInterval.Day, restrictedToMinimumLevel: LogEventLevel.Error).CreateLogger();
-        _logger.Information("Logger Starting up");
-        _logger.Information($"Path: {path}");
+        _logger = configuration;
     }
 
     public void Info(string message)

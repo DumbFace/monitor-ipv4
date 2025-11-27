@@ -9,4 +9,6 @@ public static class ConfigEnum
     public static string FIREBASE = "firebase";
 
     public static string RABBITMQ = "rabbitmq";
+
+    public static string SERILOG = "Serilog";
 }

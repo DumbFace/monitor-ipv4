@@ -1,6 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Runtime.InteropServices;
+
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 using Polly;
@@ -8,6 +11,7 @@ using Polly;
 using RabbitMQ.Client;
 
 using Serilog;
+using Serilog.Events;
 
 using Shared.Shared.Common.Constant;
 using Shared.Shared.Common.Interfaces;
@@ -20,6 +24,8 @@ namespace monitor_ip_4_tool;
 
 public class MyBackGroundService : BackgroundService
 {
+
+
     private readonly ICaching _memoryCache;
     private readonly IDatabase _database;
     private readonly ILog _logger;
@@ -31,7 +37,8 @@ public class MyBackGroundService : BackgroundService
     private readonly ResiliencePipeline _pipeline;
     private readonly IMessageBusClient _messageBusClient;
 
-    public MyBackGroundService(IOpenVPN openVPN, ICaching memoryCache, IDatabase database, ILog logger,
+    public MyBackGroundService(
+        IOpenVPN openVPN, ICaching memoryCache, IDatabase database, ILog logger,
         IEnumerable<IInternetProtocol> ipv4Services, ISendMail smtpService, IRetryHandler retryHandler,
         IPollyFactory pollyFactory, IOptionsMonitor<SystemConfig> systemConfigMonitor,
         IMessageBusClient messageBusClient)
@@ -55,7 +62,6 @@ public class MyBackGroundService : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             await Task.Delay(_systemConfigMonitor.CurrentValue.ScanIPv4FromSecond, stoppingToken);
-
             try
             {
                 string ipFromService = await _pipeline.ExecuteAsync<string>(async (token) =>
@@ -143,17 +149,29 @@ public class MyBackGroundService : BackgroundService
     {
         private static async Task Main(string[] args)
         {
-            using IHost host = Host.CreateDefaultBuilder(args).UseSerilog().UseWindowsService()
+            using IHost host = Host.CreateDefaultBuilder(args)
+                .UseWindowsService()
                 .ConfigureAppConfiguration((context, config) =>
                 {
                     var env = context.HostingEnvironment.EnvironmentName;
-                    var path = env == EnvironmentEnum.DEV ? "appsettings.Development.json" : "appsettings.json";
+                    var path = env == EnvironmentName.Development ? "appsettings.Development.json" : "appsettings.json";
+                    Console.WriteLine($"---------------------------------Environment: {env}, Path: {path}");
                     config.AddJsonFile(path, optional: false, reloadOnChange: true);
                     var sharedPath = Path.Combine(AppContext.BaseDirectory, "sharedsettings.json");
                     config.AddJsonFile(sharedPath, optional: false, reloadOnChange: true);
 
-                }).ConfigureServices((context, services) =>
+                })
+                .UseSerilog((context, service, config) =>
                 {
+                    config.ReadFrom.Configuration(context.Configuration);
+                })
+                .ConfigureServices((context, services) =>
+                {
+                    services.AddLogging((logger) =>
+                    {
+                        logger.ClearProviders();
+                        logger.AddSerilog();
+                    });
                     services.AddSingleton<ILog, LogServices>();
 
                     services.AddSingleton<IPollyFactory, PollyFactory>();
@@ -190,7 +208,9 @@ public class MyBackGroundService : BackgroundService
                             : sp.GetRequiredService<WindowOpenVPNService>());
 
                     services.AddHostedService<MyBackGroundService>();
-                }).Build();
+                })
+
+                .Build();
             await host.RunAsync();
         }
     }
