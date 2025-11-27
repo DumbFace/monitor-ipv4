@@ -27,7 +27,7 @@ public class MyBackGroundService : BackgroundService
     private readonly ICaching _memoryCache;
     private readonly IDatabase _database;
     private readonly ILog _logger;
-    private readonly IEnumerable<IInternetProtocol> _ipv4Services;
+    private readonly IInternetProtocol _ipv4Services;
     private readonly ISendMail _smtpService;
     private readonly IRetryHandler _retryHandler;
     private readonly IOpenVPN _openVPN;
@@ -35,9 +35,10 @@ public class MyBackGroundService : BackgroundService
     private readonly ResiliencePipeline _pipeline;
     private readonly IMessageBusClient _messageBusClient;
 
+    private readonly SystemConfig _systemConfig;
     public MyBackGroundService(
         IOpenVPN openVPN, ICaching memoryCache, IDatabase database, ILog logger,
-        IEnumerable<IInternetProtocol> ipv4Services, ISendMail smtpService, IRetryHandler retryHandler,
+        IInternetProtocol ipv4Services, ISendMail smtpService, IRetryHandler retryHandler,
         IPollyFactory pollyFactory, IOptionsMonitor<SystemConfig> systemConfigMonitor,
         IMessageBusClient messageBusClient)
     {
@@ -51,7 +52,7 @@ public class MyBackGroundService : BackgroundService
         _logger = logger;
         _ipv4Services = ipv4Services;
         _smtpService = smtpService;
-
+        _systemConfig = systemConfigMonitor.CurrentValue;
         _systemConfigMonitor.OnChange((config) => { _logger.Info($"System change config {config.ToStringJson()}"); });
     }
 
@@ -59,24 +60,24 @@ public class MyBackGroundService : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await Task.Delay(_systemConfigMonitor.CurrentValue.ScanIPv4FromSecond, stoppingToken);
+            await Task.Delay(_systemConfig.ScanIPv4FromSecond, stoppingToken);
             try
             {
-                string ipFromService = await _pipeline.ExecuteAsync<string>(async (token) =>
+                string ipFromService = await _pipeline.ExecuteAsync(async (token) =>
                 {
                     string ipv4 = String.Empty;
-                    foreach (var service in _ipv4Services)
+                    foreach (var url in _systemConfig.Ipv4Urls)
                     {
                         try
                         {
-                            ipv4 = await service.GetIP4Async(token);
+                            _logger.Info($"Call ip from url: {url}");
+                            ipv4 = (await _ipv4Services.GetIP4Async(url, token)).CheckingIpv4(_logger);
                             if (!String.IsNullOrEmpty(ipv4)) return ipv4;
                         }
 
                         catch (Exception ex)
                         {
                             _logger.Error($"Error IPv4 service: {ex.Message}");
-                            Thread.Sleep(ThreadSleep.MONITOR_IP * 1000);
                         }
                     }
                     return ipv4;
@@ -173,17 +174,15 @@ public class MyBackGroundService : BackgroundService
                     services.AddOptions<SystemConfig>().Bind(context.Configuration.GetSection(ConfigEnum.SYSTEM))
                         .ValidateDataAnnotations().ValidateOnStart();
                     services.AddOptions<RabbitMqConfig>().Bind(context.Configuration.GetSection(ConfigEnum.RABBITMQ));
+                    services.AddOptions<Ipv4Config>().Bind(context.Configuration.GetSection(ConfigEnum.Ipv4Config));
 
                     services.AddOptions<RedisConfig>().Bind(context.Configuration.GetSection(ConfigEnum.REDIS));
                     services.AddOptions<SMTPConfig>().Bind(context.Configuration.GetSection(ConfigEnum.SMTP));
                     services.AddSingleton(context.Configuration);
                     services.AddSingleton<ISendMail, SMTPService>();
 
-                    //Alternative redis caching 
-                    //Using for console server
                     services.AddSingleton<ICaching, RedisCacheService>();
-                    services.AddSingleton<IInternetProtocol, IfConfigServices>();
-                    services.AddSingleton<IInternetProtocol, IpifyService>();
+                    services.AddSingleton<IInternetProtocol, Ipv4Services>();
                     services.AddSingleton<IDatabase, SqlLite>();
                     services.AddSingleton<ICustomHttpFactory, CustomHttpClientFactory>();
 

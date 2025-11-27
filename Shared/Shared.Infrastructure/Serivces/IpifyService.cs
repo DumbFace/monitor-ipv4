@@ -20,7 +20,7 @@ public class IpifyService : IInternetProtocol
         _httpClient = http.GetIPv4Client();
     }
 
-    public async Task<string> GetIP4Async(CancellationToken token = default)
+    public async Task<string> GetIP4Async(string url, CancellationToken token = default)
     {
         _logger.Info("Send Request Ipify!");
         var response = await _httpClient.GetStringAsync(url, token);

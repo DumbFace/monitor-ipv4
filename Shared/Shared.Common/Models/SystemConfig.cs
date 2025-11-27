@@ -22,6 +22,8 @@ public class SystemConfig
 
     public OperatingConfig WindowOperating { get; set; }
 
+    public List<string> Ipv4Urls { get; set; }
+
     public string TEST_IP_PUBLIC { get; set; } = String.Empty;
 
 }

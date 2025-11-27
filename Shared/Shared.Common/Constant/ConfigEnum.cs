@@ -11,4 +11,7 @@ public static class ConfigEnum
     public static string RABBITMQ = "rabbitmq";
 
     public static string SERILOG = "Serilog";
+
+    public static string Ipv4Config = "Ipv4Urls";
+
 }
