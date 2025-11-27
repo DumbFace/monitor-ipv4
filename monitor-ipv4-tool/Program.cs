@@ -24,8 +24,6 @@ namespace monitor_ip_4_tool;
 
 public class MyBackGroundService : BackgroundService
 {
-
-
     private readonly ICaching _memoryCache;
     private readonly IDatabase _database;
     private readonly ILog _logger;
@@ -154,12 +152,8 @@ public class MyBackGroundService : BackgroundService
                 .ConfigureAppConfiguration((context, config) =>
                 {
                     var env = context.HostingEnvironment.EnvironmentName;
-                    var path = env == EnvironmentName.Development ? "appsettings.Development.json" : "appsettings.json";
-                    Console.WriteLine($"---------------------------------Environment: {env}, Path: {path}");
+                    var path = env == Environments.Development ? "appsettings.Development.json" : "appsettings.Production.json";
                     config.AddJsonFile(path, optional: false, reloadOnChange: true);
-                    var sharedPath = Path.Combine(AppContext.BaseDirectory, "sharedsettings.json");
-                    config.AddJsonFile(sharedPath, optional: false, reloadOnChange: true);
-
                 })
                 .UseSerilog((context, service, config) =>
                 {
@@ -178,6 +172,8 @@ public class MyBackGroundService : BackgroundService
                     services.AddSingleton<IRetryHandler, RetryServices>();
                     services.AddOptions<SystemConfig>().Bind(context.Configuration.GetSection(ConfigEnum.SYSTEM))
                         .ValidateDataAnnotations().ValidateOnStart();
+                    services.AddOptions<RabbitMqConfig>().Bind(context.Configuration.GetSection(ConfigEnum.RABBITMQ));
+
                     services.AddOptions<RedisConfig>().Bind(context.Configuration.GetSection(ConfigEnum.REDIS));
                     services.AddOptions<SMTPConfig>().Bind(context.Configuration.GetSection(ConfigEnum.SMTP));
                     services.AddSingleton(context.Configuration);
@@ -190,8 +186,6 @@ public class MyBackGroundService : BackgroundService
                     services.AddSingleton<IInternetProtocol, IpifyService>();
                     services.AddSingleton<IDatabase, SqlLite>();
                     services.AddSingleton<ICustomHttpFactory, CustomHttpClientFactory>();
-
-                    services.AddSharedLibrary(context.Configuration);
 
                     services.AddSingleton<LinuxOpenVPNService>();
                     services.AddSingleton<WindowOpenVPNService>();

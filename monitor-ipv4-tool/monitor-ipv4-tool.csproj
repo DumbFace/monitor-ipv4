@@ -12,11 +12,11 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
 
-        <None Update="appsettings.json" Condition="'$(Configuration)' == 'Release'">
+        <None Update="appsettings.Production.json" Condition="'$(Configuration)' == 'Release'">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
 
-        <None Include="..\Shared\*.txt;..\Shared\client.ovpn;..\Shared\sharedsettings.json">
+        <None Include="..\Shared\*.txt;..\Shared\client.ovpn">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>

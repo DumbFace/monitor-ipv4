@@ -19,12 +19,8 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
 
-     <None Include="..\Shared\*.txt;..\Shared\client.ovpn">
+    <None Include="..\Shared\*.txt;..\Shared\client.ovpn">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
-      <ItemGroup>
-        <ProjectReference Include="..\Shared\Shared.csproj" />
-    </ItemGroup>
 </Project>

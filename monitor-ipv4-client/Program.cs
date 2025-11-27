@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 using Polly;
@@ -122,12 +123,23 @@ public class Program
             .ConfigureAppConfiguration((context, config) =>
             {
                 var env = context.HostingEnvironment.EnvironmentName;
-                Console.WriteLine($"ENV: {env}");
-                var path = env == EnvironmentEnum.DEV ? "appsettings.Development.json" : "appsettings.json";
+                var path = env == Environments.Development ? "appsettings.Development.json" : "appsettings.Production.json";
                 config.AddJsonFile(path, optional: false, reloadOnChange: true);
 
-            }).ConfigureServices(static (context, services) =>
+            })
+            .UseSerilog((context, service, config) =>
             {
+                config.ReadFrom.Configuration(context.Configuration);
+            })
+            .ConfigureServices(static (context, services) =>
+            {
+
+                services.AddLogging((logger) =>
+                    {
+                        logger.ClearProviders();
+                        logger.AddSerilog();
+                    });
+                services.AddSingleton<ILog, LogServices>();
                 services.AddSingleton<ILog, LogServices>();
 
                 services.AddSingleton<IPollyFactory, PollyFactory>();
@@ -136,11 +148,6 @@ public class Program
                 services.AddSingleton(context.Configuration);
 
                 //Alternative redis caching 
-                //Using for console server
-                // services.AddOptions<RedisConfig>().Bind(context.Configuration.GetSection(ConfigEnum.REDIS))
-                //         .ValidateDataAnnotations().ValidateOnStart();
-                // services.AddSingleton<ICaching, RedisCacheService>();
-
                 //Using for console client
                 services.AddSingleton<ICaching, MicrosoftMemoryCacheService>();
                 services.AddSingleton<IDatabase, SqlLite>();

@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Mail;
 
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 
 using Shared.Shared.Common.Interfaces;
@@ -13,18 +12,15 @@ public class SMTPService : ISendMail
 {
     private readonly ILog _logger;
 
-    readonly IConfiguration _config;
 
     readonly IOptionsMonitor<SMTPConfig> _smtpConfigMonitoor;
     public SMTPService(
         ILog logger,
-        IConfiguration config,
         IOptionsMonitor<SMTPConfig> smtpConfigMonitoor
         )
     {
         _smtpConfigMonitoor = smtpConfigMonitoor;
         _logger = logger;
-        _config = config;
 
         _smtpConfigMonitoor.OnChange((config) =>
         {
@@ -47,6 +43,7 @@ public class SMTPService : ISendMail
         smtp.Credentials = new NetworkCredential(config.From, config.Password);
         smtp.EnableSsl = true;
         // await smtp.SendMailAsync(mail, token);
+        await Task.Delay(2000);
         _logger.Info($"Send Email Or Sync New IP: ${body}");
     }
 }

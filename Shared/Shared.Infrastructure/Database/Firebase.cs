@@ -41,11 +41,12 @@ public class Firebase : IDataCRUD
             Ipv4 = ip,
             ModifiedAt = DateTime.Now
         };
-        var response = await _httpClient.PutAsJsonAsync(BuildPath("IpLog"), ipLog, token);
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new Exception("Update firebase didnt success");
-        }
+        await Task.Delay(5000, token);
+        // var response = await _httpClient.PutAsJsonAsync(BuildPath("IpLog"), ipLog, token);
+        // if (!response.IsSuccessStatusCode)
+        // {
+        //     throw new Exception("Update firebase didnt success");
+        // }
         _logger.Info($"Update firebase successful: {ipLog.ToStringJson()}");
         return (int)HttpStatusCode.OK;
     }

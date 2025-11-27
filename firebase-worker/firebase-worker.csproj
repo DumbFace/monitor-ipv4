@@ -32,14 +32,11 @@
     <ProjectReference Include="..\Shared\Shared.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="appsettings.Development.json">
+    <None Update="appsettings.Development.json" Condition="'$(Configuration)' == 'Debug'">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="appsettings.json">
+    <None Update="appsettings.Production.json" Condition="'$(Configuration)' == 'Release'">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-     <None Include="..\Shared\sharedsettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>    
   </ItemGroup>
 </Project>

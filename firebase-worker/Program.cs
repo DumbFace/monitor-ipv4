@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 using RabbitMQ.Client;
 
@@ -9,7 +10,7 @@ using Serilog;
 using Shared.Shared.Common.Constant;
 using Shared.Shared.Common.Interfaces;
 using Shared.Shared.Common.Models;
-using Shared.Shared.Common.Utils;
+
 using Shared.Shared.Infrastructure.Database;
 using Shared.Shared.Infrastructure.Serivces;
 
@@ -48,17 +49,22 @@ class Program
             .ConfigureAppConfiguration((context, config) =>
             {
                 var env = context.HostingEnvironment.EnvironmentName;
-                Console.WriteLine($"ENV: {env}");
-                var path = env == EnvironmentEnum.DEV ? "appsettings.Development.json" : "appsettings.json";
+                var path = env == Environments.Development ? "appsettings.Development.json" : "appsettings.Production.json";
                 config.AddJsonFile(path, optional: false, reloadOnChange: true);
-                var sharedPath = Path.Combine(AppContext.BaseDirectory, "sharedsettings.json");
-                config.AddJsonFile(sharedPath, optional: false, reloadOnChange: true);
-
-            }).ConfigureServices((context, services) =>
+            })
+            .UseSerilog((context, service, config) =>
             {
+                config.ReadFrom.Configuration(context.Configuration);
+            })
+            .ConfigureServices((context, services) =>
+            {
+                services.AddLogging((logger) =>
+                {
+                    logger.ClearProviders();
+                    logger.AddSerilog();
+                });
                 services.AddSingleton<ILog, LogServices>();
                 services.AddOptions<RabbitMqConfig>().Bind(context.Configuration.GetSection(ConfigEnum.RABBITMQ));
-
 
                 services.AddSingleton(context.Configuration);
                 services.AddSingleton<ICustomHttpFactory, CustomHttpClientFactory>();
@@ -66,7 +72,6 @@ class Program
                 services.AddSingleton<IMessageBusConnection<IConnection>, RabbitMQConnection>();
 
                 services.AddSingleton<IMessageBusClient, RabbitMqMessage>();
-                services.AddSharedLibrary(context.Configuration);
                 services.AddSingleton<IDataCRUD, Firebase>();
                 services.AddHostedService<FirebaseWorkerBackGroundService>();
             }).Build();
