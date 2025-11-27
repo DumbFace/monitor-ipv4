@@ -1,8 +1,3 @@
-
-
-using System.Net;
-using System.Net.Sockets;
-
 using Shared.Shared.Common.Interfaces;
 
 namespace Shared.Shared.Infrastructure.Serivces
