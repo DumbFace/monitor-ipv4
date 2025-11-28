@@ -32,21 +32,15 @@ public class Program
         sendMailOption.Description = "Enable SendMail";
         sendMailOption.DefaultValueFactory = (_) => true;
 
-        var updateVPNClientOption = new Option<bool>("--updatevpnclient");
-        updateVPNClientOption.Description = "Enable UpdateVPNClient";
-        updateVPNClientOption.DefaultValueFactory = (_) => true;
-
         var root = new RootCommand("Monitor tool")
             {
                 rabbitOption,
-                sendMailOption,
-                updateVPNClientOption
+                sendMailOption
             };
         root.SetAction(async parseResult =>
        {
            bool rabbitmq = parseResult.GetValue(rabbitOption);
            bool sendmail = parseResult.GetValue(sendMailOption);
-           bool updatevpnclient = parseResult.GetValue(updateVPNClientOption);
 
            using IHost host = Host.CreateDefaultBuilder(args)
                .UseWindowsService()
@@ -72,7 +66,6 @@ public class Program
                    {
                        RabbitMq = rabbitmq,
                        SendMail = sendmail,
-                       UpdateVPNClient = updatevpnclient
                    });
                    services.AddSingleton<IPollyFactory, PollyFactory>();
                    services.AddSingleton<IRetryHandler, RetryServices>();

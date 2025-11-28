@@ -76,7 +76,6 @@ public class MonitorIpv4ClientService : BackgroundService
                     _memoryCache.Set(Cachekeys.LAST_IP, ipFromDb, null);
                     _logger.Info($"Ip from db:  {ipFromDb}");
                 }
-
                 _logger.Info($"Ip from caching:  {ipFromCaching}");
                 _logger.Info($"Ip from service:  {ipFromService}");
                 _logger.Info($"Ip from lastIp:  {lastIp}");
@@ -94,10 +93,6 @@ public class MonitorIpv4ClientService : BackgroundService
                 await _database.CloseDb();
 
                 _memoryCache.Set(Cachekeys.LAST_IP, ipFromService, null);
-
-                _logger.Info("Update client openvpn");
-                _logger.Info("Restart Service successfully");
-
             }
             catch (Exception ex)
             {

@@ -18,23 +18,19 @@ public class MonitorIpv4ServerService : BackgroundService
     private readonly IInternetProtocol _ipv4Services;
     private readonly ISendMail _smtpService;
     private readonly IRetryHandler _retryHandler;
-    private readonly IOpenVPN _openVPN;
-    readonly IOptionsMonitor<SystemConfig> _systemConfigMonitor;
     private readonly ResiliencePipeline _pipeline;
     private readonly IMessageBusClient _messageBusClient;
     private readonly CliOptions _cliOptions;
     private readonly SystemConfig _systemConfig;
     public MonitorIpv4ServerService(
         CliOptions cliOptions,
-        IOpenVPN openVPN, ICaching memoryCache, IDatabase database, ILog logger,
+         ICaching memoryCache, IDatabase database, ILog logger,
         IInternetProtocol ipv4Services, ISendMail smtpService, IRetryHandler retryHandler,
         IPollyFactory pollyFactory, IOptionsMonitor<SystemConfig> systemConfigMonitor,
         IMessageBusClient messageBusClient)
     {
         _cliOptions = cliOptions;
         _messageBusClient = messageBusClient;
-        _openVPN = openVPN;
-        _systemConfigMonitor = systemConfigMonitor;
         _pipeline = pollyFactory.GetIPServicesPipeLine();
         _retryHandler = retryHandler;
         _memoryCache = memoryCache;
@@ -43,8 +39,6 @@ public class MonitorIpv4ServerService : BackgroundService
         _ipv4Services = ipv4Services;
         _smtpService = smtpService;
         _systemConfig = systemConfigMonitor.CurrentValue;
-        _systemConfigMonitor.OnChange((config) => { _logger.Info($"System change config {config.ToStringJson()}"); });
-        _logger.Info($"_cliOptions: RabbitMq {_cliOptions.RabbitMq} , Sendmail {_cliOptions.SendMail}, UpdateVPNClient {_cliOptions.UpdateVPNClient}");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -80,7 +74,7 @@ public class MonitorIpv4ServerService : BackgroundService
                     continue;
                 }
 
-                _logger.Info($"{ipFromService}");
+                _logger.Info($"Ipv4 Services: {ipFromService}");
 
                 var ipFromCaching = _memoryCache.Get<string>(Cachekeys.LAST_IP);
                 var lastIp = ipFromCaching;
@@ -98,7 +92,6 @@ public class MonitorIpv4ServerService : BackgroundService
                     _memoryCache.Set(Cachekeys.LAST_IP, ipFromDb, null);
                     _logger.Info($"Ip from db:  {ipFromDb}");
                 }
-
                 _logger.Info($"Ip from caching:  {ipFromCaching}");
                 _logger.Info($"Ip from service:  {ipFromService}");
                 _logger.Info($"Ip from lastIp:  {lastIp}");
@@ -113,27 +106,15 @@ public class MonitorIpv4ServerService : BackgroundService
                     await producer.PublishAsync(ipFromService, rabbitOption, stoppingToken);
                 }
 
-                if (_cliOptions.UpdateVPNClient)
-                {
-                    await _openVPN.UpdateClient(ipFromService);
-                    await _openVPN.RestartService(OperatingSystem.IsLinux() ?
-                        _systemConfigMonitor.CurrentValue.LinuxOperating.OpenVPNService :
-                        _systemConfigMonitor.CurrentValue.WindowOperating.OpenVPNService);
-                }
-
                 if (_cliOptions.SendMail)
                     await _retryHandler.ExecuteAsync((token) =>
                         _smtpService.SendMail(token, subject: "IP has changed", body: ipFromService));
-
 
                 await _database.ConnectDb();
                 await _database.SaveIP(ipFromService);
                 await _database.CloseDb();
 
                 _memoryCache.Set(Cachekeys.LAST_IP, ipFromService, null);
-
-                _logger.Info("Update client openvpn");
-                _logger.Info("Restart Service successfully");
             }
             catch (Exception ex)
             {
