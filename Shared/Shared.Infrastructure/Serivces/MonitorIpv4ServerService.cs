@@ -41,8 +41,29 @@ public class MonitorIpv4ServerService : BackgroundService
         _systemConfig = systemConfigMonitor.CurrentValue;
     }
 
+    /// <summary>
+    /// Get last ip from data base and init table IPLog if not exist
+    /// </summary>
+    /// <returns></returns>
+    async Task<string> GetLastIpFromDB()
+    {
+        await _database.ConnectDb();
+        if (await _database.CheckIfTableExist())
+        {
+            await _database.InitDb();
+        }
+        var lastIp = await _database.GetLastIP();
+        _memoryCache.Set(Cachekeys.LAST_IP, lastIp, null);
+        _logger.Info($"Ip from db:  {lastIp}");
+        await _database.CloseDb();
+        return lastIp;
+    }
+
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+
+
         while (!stoppingToken.IsCancellationRequested)
         {
             await Task.Delay(_systemConfig.ScanIPv4FromSecond, stoppingToken);
@@ -80,17 +101,7 @@ public class MonitorIpv4ServerService : BackgroundService
                 var lastIp = ipFromCaching;
                 if (String.IsNullOrEmpty(ipFromCaching))
                 {
-                    await _database.ConnectDb();
-                    var ipFromDb = await _database.GetLastIP();
-                    if (String.IsNullOrEmpty(ipFromDb))
-                    {
-                        await _database.InitDb();
-                        lastIp = IP.LOCALIP;
-                    }
-
-                    lastIp = ipFromDb;
-                    _memoryCache.Set(Cachekeys.LAST_IP, ipFromDb, null);
-                    _logger.Info($"Ip from db:  {ipFromDb}");
+                    lastIp = await GetLastIpFromDB();
                 }
                 _logger.Info($"Ip from caching:  {ipFromCaching}");
                 _logger.Info($"Ip from service:  {ipFromService}");
@@ -110,6 +121,7 @@ public class MonitorIpv4ServerService : BackgroundService
                     await _retryHandler.ExecuteAsync((token) =>
                         _smtpService.SendMail(token, subject: "IP has changed", body: ipFromService));
 
+                await GetLastIpFromDB();
                 await _database.ConnectDb();
                 await _database.SaveIP(ipFromService);
                 await _database.CloseDb();

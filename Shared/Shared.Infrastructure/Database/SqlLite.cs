@@ -35,13 +35,11 @@ public class SqlLite : IDatabase
     {
         var cmd = connect.CreateCommand();
         cmd.CommandText = @"
-        CREATE TABLE IF NOT EXISTS IpLog (
-            Id INTEGER PRIMARY KEY AUTOINCREMENT,
-            Ip TEXT NOT NULL,
-            CreatedAt TEXT NOT NULL
-        );
-        INSERT INTO IpLog (Ip, CreatedAt) VALUES ('127.0.0.1', datetime('now'));
-
+            CREATE TABLE IF NOT EXISTS IpLog (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Ip TEXT NOT NULL,
+                CreatedAt TEXT NOT NULL
+            );
         ";
 
         await cmd.ExecuteNonQueryAsync();
@@ -52,8 +50,8 @@ public class SqlLite : IDatabase
                INSERT INTO IpLog (Ip, CreatedAt) VALUES ('127.0.0.1', datetime('now'));
             ";
 
-            var result = await cmd.ExecuteScalarAsync();
-            _logger.Info($"Init Db result: ${result}");
+            var result = await cmd.ExecuteNonQueryAsync();
+            _logger.Info($"Init Db result: {result > 0}");
         }
         catch (Exception ex)
         {
@@ -86,4 +84,17 @@ public class SqlLite : IDatabase
         }
         return result;
     }
+
+    public async Task<bool> CheckIfTableExist()
+    {
+        var cmd = connect.CreateCommand();
+        cmd.CommandText = @"
+            SELECT name 
+            FROM sqlite_master 
+            WHERE type='table' AND name='IpLog';
+        ";
+        var result = await cmd.ExecuteScalarAsync() as string;
+        return String.IsNullOrEmpty(result);
+    }
+
 }
