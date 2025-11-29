@@ -2,7 +2,7 @@
 bin/
 obj/
 out/
-monitor-ip-4-tool/*.db
+monitor-ip4-tool/*.db
 # user-specific files
 *.user
 *.suo
@@ -18,3 +18,4 @@ monitor-ip-4-tool/*.db
 Thumbs.db
 
 .idea
+.vscode
