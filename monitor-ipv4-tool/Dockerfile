@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# copy csproj trước để restore cache
+# copy all csproj
 COPY Shared/Shared.csproj Shared/
 COPY monitor-ipv4-tool/monitor-ipv4-tool.csproj monitor-ipv4-tool/
 
