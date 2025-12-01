@@ -1,6 +1,9 @@
+using System.Resources;
 using System.Text;
 
 using Newtonsoft.Json;
+
+using Polly;
 
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -14,24 +17,30 @@ namespace Shared.Shared.Infrastructure.Serivces
     {
         readonly private IMessageBusConnection<IConnection> _rabbitConnection;
         readonly private ILog _logger;
+        private readonly IRetryHandler _retryHandler;
 
         public RabbitMqSubscriber(
             IMessageBusConnection<IConnection> rabbitConnection,
-            ILog logger
+            ILog logger,
+            IRetryHandler retryHandler
             )
         {
+            _retryHandler = retryHandler;
             _logger = logger;
             _rabbitConnection = rabbitConnection;
         }
 
         public async Task SubscribeAsync<T, TConfig>(Func<T, Task> handler, TConfig config, CancellationToken token = default) where TConfig : IMessagingOptions
         {
-            var option = config as RabbitMqOptions
-                             ?? throw new InvalidOperationException("Config must be RabbitMqOptions.");
-            var connection = await _rabbitConnection.GetConnectionAsync();
-            var channel = await connection.CreateChannelAsync();
             try
             {
+                var option = config as RabbitMqOptions
+                                 ?? throw new InvalidOperationException("Config must be RabbitMqOptions.");
+                var channel = await _retryHandler.ExecuteAsync(async (token) =>
+                {
+                    var connection = await _rabbitConnection.GetConnectionAsync();
+                    return await connection.CreateChannelAsync(cancellationToken: token);
+                });
                 var queueRetryArg = new Dictionary<string, object>
                     {
                         { "x-dead-letter-exchange", option.Exchange },

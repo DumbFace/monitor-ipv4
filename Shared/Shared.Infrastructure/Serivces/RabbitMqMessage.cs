@@ -1,30 +1,25 @@
 
-using RabbitMQ.Client;
-
 using Shared.Shared.Common.Interfaces;
 
 namespace Shared.Shared.Infrastructure.Serivces
 {
     public class RabbitMqMessage : IMessageBusClient
     {
-        readonly private ILog _logger;
-        readonly private IMessageBusConnection<IConnection> _connection;
+        private readonly Func<IPublisher> _publisherFactory;
+        private readonly Func<ISubscriber> _subscriberFactory;
 
-        public RabbitMqMessage(IMessageBusConnection<IConnection> connection, ILog logger)
+
+        public RabbitMqMessage(
+            Func<IPublisher> publisherFactory,
+            Func<ISubscriber> subscriberFactory)
         {
-            _connection = connection;
-            _logger = logger;
+            _publisherFactory = publisherFactory;
+            _subscriberFactory = subscriberFactory;
         }
-
         public IPublisher CreatePublisher()
-        {
-            return new RabbitMqPublisher(_connection, _logger);
-        }
+               => _publisherFactory();
 
         public ISubscriber CreateSubscriber()
-        {
-
-            return new RabbitMqSubscriber(_connection, _logger);
-        }
+            => _subscriberFactory();
     }
 }

@@ -20,5 +20,14 @@ Thumbs.db
 .idea
 .vscode
 
+firebase-worker/bin
+firebase-worker/obj
+firebase-worker/logs
 
-firebase-worker/logs/
+monitor-ipv4-tool/bin
+monitor-ipv4-tool/obj
+monitor-ipv4-tool/logs
+
+monitor-ipv4-client/bin
+monitor-ipv4-client/obj
+monitor-ipv4-client/logs

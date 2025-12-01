@@ -25,16 +25,16 @@ services:
     networks:
       monitor-net:
         ipv4_address: 172.19.0.20
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
+    # healthcheck:
+    #   test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+    #   interval: 5s
+    #   timeout: 3s
+    #   retries: 5
 
   monitor-ipv4-tool:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: monitor-ipv4-tool/Dockerfile
     container_name: monitor-server
     environment:
       - DOTNET_ENVIRONMENT=Production
@@ -42,9 +42,9 @@ services:
       - monitor-net
     depends_on:
       redis:
-        condition: service_healthy
+        condition: service_started
       rabbitmq:
-        condition: service_healthy
+        condition: service_started
       firebase-worker:
         condition: service_started
 
@@ -60,4 +60,4 @@ services:
         ipv4_address: 172.19.0.30
     depends_on:
       rabbitmq:
-        condition: service_healthy
+        condition: service_started

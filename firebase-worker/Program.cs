@@ -37,6 +37,10 @@ class Program
                     logger.ClearProviders();
                     logger.AddSerilog();
                 });
+
+                services.AddSingleton<IPollyFactory, PollyFactory>();
+                services.AddSingleton<IRetryHandler, RetryServices>();
+
                 services.AddSingleton<ILog, LogServices>();
                 services.AddOptions<RabbitMqConfig>().Bind(context.Configuration.GetSection(ConfigEnum.RABBITMQ));
 
@@ -46,6 +50,19 @@ class Program
                 services.AddSingleton<IMessageBusConnection<IConnection>, RabbitMQConnection>();
 
                 services.AddSingleton<IMessageBusClient, RabbitMqMessage>();
+
+                services.AddTransient<IPublisher, RabbitMqPublisher>();
+                services.AddTransient<ISubscriber, RabbitMqSubscriber>();
+
+                services.AddSingleton<Func<IPublisher>>(sp =>
+                {
+                    return () => sp.GetRequiredService<IPublisher>();
+                });
+
+                services.AddSingleton<Func<ISubscriber>>(sp =>
+                {
+                    return () => sp.GetRequiredService<ISubscriber>();
+                });
                 services.AddSingleton<IDataCRUD, Firebase>();
                 services.AddHostedService<FirebaseWorkerBackGroundService>();
             }).Build();
