@@ -1,3 +1,4 @@
+
 using Microsoft.Extensions.Caching.Memory;
 
 using Shared.Shared.Common.Interfaces;
@@ -18,18 +19,20 @@ public class MicrosoftMemoryCacheService : ICaching
         _logger.Info("Init Memory Cache Service");
     }
 
-    public T Get<T>(string key)
+    public Task<T> GetAsync<T>(string key)
     {
-        if (_caching.TryGetValue(key, out T value)) return value;
+        if (_caching.TryGetValue(key, out T value)) return Task.FromResult(value);
 
         return default;
     }
 
-    public void Set<T>(string key, T value, TimeSpan? expiration = null)
+    public Task SetAsync<T>(string key, T value, TimeSpan? expiration = null)
     {
         var options = new MemoryCacheEntryOptions();
         if (expiration.HasValue) options.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
 
         _caching.Set(key, value, options);
+        return Task.CompletedTask;
     }
+
 }

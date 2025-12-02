@@ -57,7 +57,7 @@ namespace Shared.Shared.Infrastructure.Serivces
             return builder.AddRetry(new RetryStrategyOptions
             {
                 MaxRetryAttempts = 3,
-                Delay = TimeSpan.FromSeconds(5),
+                Delay = TimeSpan.FromSeconds(10),
                 OnRetry = args =>
                 {
                     _logger.Warn($"Retry attempt {args.AttemptNumber} after {args.RetryDelay}s due to {args.Outcome.Exception.Message}");

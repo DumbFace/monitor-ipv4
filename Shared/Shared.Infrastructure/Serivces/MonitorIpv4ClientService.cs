@@ -60,7 +60,7 @@ public class MonitorIpv4ClientService : BackgroundService
 
                 _logger.Info($"{ipFromService}");
 
-                var ipFromCaching = _memoryCache.Get<string>(Cachekeys.LAST_IP);
+                var ipFromCaching = await _memoryCache.GetAsync<string>(Cachekeys.LAST_IP);
                 var lastIp = ipFromCaching;
                 if (String.IsNullOrEmpty(ipFromCaching))
                 {
@@ -73,7 +73,7 @@ public class MonitorIpv4ClientService : BackgroundService
                     }
 
                     lastIp = ipFromDb;
-                    _memoryCache.Set(Cachekeys.LAST_IP, ipFromDb, null);
+                    await _memoryCache.SetAsync(Cachekeys.LAST_IP, ipFromDb, null);
                     _logger.Info($"Ip from db:  {ipFromDb}");
                 }
                 _logger.Info($"Ip from caching:  {ipFromCaching}");
@@ -92,7 +92,7 @@ public class MonitorIpv4ClientService : BackgroundService
                 await _database.SaveIP(ipFromService);
                 await _database.CloseDb();
 
-                _memoryCache.Set(Cachekeys.LAST_IP, ipFromService, null);
+                await _memoryCache.SetAsync(Cachekeys.LAST_IP, ipFromService, null);
             }
             catch (Exception ex)
             {

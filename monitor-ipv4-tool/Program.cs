@@ -79,6 +79,7 @@ public class Program
                    services.AddSingleton(context.Configuration);
                    services.AddSingleton<ISendMail, SMTPService>();
 
+                   services.AddSingleton<ICachingConnector, RedisConnectorService>();
                    services.AddSingleton<ICaching, RedisCacheService>();
                    services.AddSingleton<IInternetProtocol, Ipv4Services>();
                    services.AddSingleton<IDatabase, SqlLite>();

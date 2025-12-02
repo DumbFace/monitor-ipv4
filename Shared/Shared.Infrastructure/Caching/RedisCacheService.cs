@@ -9,48 +9,39 @@ using StackExchange.Redis;
 
 namespace Shared.Shared.Infrastructure.Caching;
 
-public class RedisCacheService : ICaching, IDisposable
+public class RedisCacheService : ICaching
 {
-    private StackExchange.Redis.IDatabase _db;
-    private ConnectionMultiplexer _connection;
     private ILog _logger;
+    private readonly IRetryHandler _retryHandler;
+    private readonly ICachingConnector _connector;
 
-    readonly IOptionsMonitor<RedisConfig> _redisConfigMonitor;
 
     public RedisCacheService(
         ILog logger,
-        IOptionsMonitor<RedisConfig> redisConfigMonitor
+        ICachingConnector connector,
+        IRetryHandler retryHandler
     )
     {
-        _redisConfigMonitor = redisConfigMonitor;
+        _retryHandler = retryHandler;
+        _connector = connector;
         _logger = logger;
-        RedisConfig redisConfig = _redisConfigMonitor.CurrentValue;
-        if (redisConfig is null) throw new Exception("Cannot read redis config or redis is null");
-        _connection = ConnectionMultiplexer.Connect($"{redisConfig.Server}:{redisConfig.Port}");
-        _db = _connection.GetDatabase();
-        _logger.Info($"Redis DB is ready {_db.Ping()}");
-        _redisConfigMonitor.OnChange((config) =>
-        {
-            _logger.Info($"Redis change config {config.ToStringJson()}");
-        });
     }
 
-    public T Get<T>(string key)
+    public async Task<T> GetAsync<T>(string key)
     {
-        var value = _db.StringGet(key);
+        var redisConnection = await _connector.GetConnectionMultiplexerAsync();
+        var db = redisConnection.GetDatabase();
+        var value = db.StringGet(key);
         if (value.IsNullOrEmpty) return default;
         return JsonConvert.DeserializeObject<T>(value);
     }
 
-    public void Set<T>(string key, T value, TimeSpan? expiration = null)
+    public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null)
     {
+        var redisConnection = await _connector.GetConnectionMultiplexerAsync();
+        var db = redisConnection.GetDatabase();
         TimeSpan timeSpan = expiration ?? TimeSpan.FromHours(1);
         var serilizeObject = JsonConvert.SerializeObject(value);
-        _db.StringSet(key, serilizeObject, timeSpan);
-    }
-
-    public void Dispose()
-    {
-        _connection.Dispose();
+        db.StringSet(key, serilizeObject, timeSpan);
     }
 }

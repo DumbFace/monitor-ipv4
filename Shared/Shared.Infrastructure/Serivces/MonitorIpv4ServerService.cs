@@ -53,7 +53,7 @@ public class MonitorIpv4ServerService : BackgroundService
             await _database.InitDb();
         }
         var lastIp = await _database.GetLastIP();
-        _memoryCache.Set(Cachekeys.LAST_IP, lastIp, null);
+        await _memoryCache.SetAsync(Cachekeys.LAST_IP, lastIp, null);
         _logger.Info($"Ip from db:  {lastIp}");
         await _database.CloseDb();
         return lastIp;
@@ -97,7 +97,7 @@ public class MonitorIpv4ServerService : BackgroundService
 
                 _logger.Info($"Ipv4 Services: {ipFromService}");
 
-                var ipFromCaching = _memoryCache.Get<string>(Cachekeys.LAST_IP);
+                var ipFromCaching = await _memoryCache.GetAsync<string>(Cachekeys.LAST_IP);
                 var lastIp = ipFromCaching;
                 if (String.IsNullOrEmpty(ipFromCaching))
                 {
@@ -126,7 +126,7 @@ public class MonitorIpv4ServerService : BackgroundService
                 await _database.SaveIP(ipFromService);
                 await _database.CloseDb();
 
-                _memoryCache.Set(Cachekeys.LAST_IP, ipFromService, null);
+                await _memoryCache.SetAsync(Cachekeys.LAST_IP, ipFromService, null);
             }
             catch (Exception ex)
             {
