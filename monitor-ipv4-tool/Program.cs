@@ -91,9 +91,18 @@ public class Program
                    services.AddSingleton<IMessageBusConnection<IConnection>, RabbitMQConnection>();
 
                    services.AddSingleton<IMessageBusClient, RabbitMqMessage>();
-                   services.AddSingleton<IPublisher, RabbitMqPublisher>();
-                   services.AddSingleton<ISubscriber, RabbitMqSubscriber>();
+                   services.AddTransient<IPublisher, RabbitMqPublisher>();
+                   services.AddTransient<ISubscriber, RabbitMqSubscriber>();
 
+                   services.AddSingleton<Func<IPublisher>>(sp =>
+                   {
+                       return () => sp.GetRequiredService<IPublisher>();
+                   });
+
+                   services.AddSingleton<Func<ISubscriber>>(sp =>
+                   {
+                       return () => sp.GetRequiredService<ISubscriber>();
+                   });
                    services.AddSingleton<IOpenVPN>(sp =>
                        OperatingSystem.IsLinux()
                            ? sp.GetRequiredService<LinuxOpenVPNService>()
