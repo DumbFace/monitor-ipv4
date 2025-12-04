@@ -1,0 +1,8 @@
+services:
+  web-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: web-api
+    ports:
+      - "80:8080"
