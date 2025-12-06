@@ -1,6 +1,6 @@
 namespace Shared.Shared.Common.Interfaces
 {
-    public interface IOpenVPN : IVPNHandler
+    public interface IWireguard : IVPNHandler
     {
     }
 }

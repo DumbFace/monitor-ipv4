@@ -18,12 +18,16 @@ public class MicrosoftMemoryCacheService : ICaching
         _caching = new MemoryCache(options);
         _logger.Info("Init Memory Cache Service");
     }
-
-    public Task<T> GetAsync<T>(string key)
+    public async Task<T> GetAsync<T>(string key)
     {
-        if (_caching.TryGetValue(key, out T value)) return Task.FromResult(value);
+        var result = await Task.Run(() =>
+        {
+            if (_caching.TryGetValue(key, out T value))
+                return value;
 
-        return default;
+            return default;
+        });
+        return result;
     }
 
     public Task SetAsync<T>(string key, T value, TimeSpan? expiration = null)

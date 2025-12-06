@@ -19,7 +19,7 @@ public class Firebase : IDataCRUD
         _logger = logger;
         _httpClient = customHttp.GetHttpClientDefault();
     }
-
+    //TODO using JTW instead of firebase secret
     public async Task<string> GetLastIP(CancellationToken token = default)
     {
         var response = await _httpClient.GetStringAsync(BuildPath("IpLog"), token);

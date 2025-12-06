@@ -52,14 +52,19 @@ public class Program
 
                 services.AddOptions<SystemConfig>().Bind(context.Configuration.GetSection(ConfigEnum.SYSTEM))
                     .ValidateDataAnnotations().ValidateOnStart();
-                services.AddSingleton<LinuxOpenVPNService>();
-                services.AddSingleton<WindowOpenVPNService>();
+                services.AddOptions<WireguardVPNConfig>().Bind(context.Configuration.GetSection(ConfigEnum.WIREGUARD));
+
+                services.AddSingleton<IVPNHandler, LinuxWireguardService>();
                 services.AddSingleton<IDataCRUD, Firebase>();
 
-                services.AddSingleton<IOpenVPN>(sp =>
-                    OperatingSystem.IsLinux()
-                        ? sp.GetRequiredService<LinuxOpenVPNService>()
-                        : sp.GetRequiredService<WindowOpenVPNService>());
+                // ! Do not remove if you use openvpn 
+                // services.AddSingleton<LinuxOpenVPNService>();
+                // services.AddSingleton<WindowOpenVPNService>();
+
+                // services.AddSingleton<IVPNHandler>(sp =>
+                //     OperatingSystem.IsLinux()
+                //         ? sp.GetRequiredService<LinuxOpenVPNService>()
+                //         : sp.GetRequiredService<WindowOpenVPNService>());
 
                 services.AddHostedService<MonitorIpv4ClientService>();
             }).Build();

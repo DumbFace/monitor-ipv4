@@ -85,8 +85,6 @@ public class Program
                    services.AddSingleton<IDatabase, SqlLite>();
                    services.AddSingleton<ICustomHttpFactory, CustomHttpClientFactory>();
 
-                   services.AddSingleton<LinuxOpenVPNService>();
-                   services.AddSingleton<WindowOpenVPNService>();
                    services.AddSingleton<IDataCRUD, Firebase>();
                    services.AddSingleton<IMessageBusConnection<IConnection>, RabbitMQConnection>();
 
@@ -103,10 +101,6 @@ public class Program
                    {
                        return () => sp.GetRequiredService<ISubscriber>();
                    });
-                   services.AddSingleton<IOpenVPN>(sp =>
-                       OperatingSystem.IsLinux()
-                           ? sp.GetRequiredService<LinuxOpenVPNService>()
-                           : sp.GetRequiredService<WindowOpenVPNService>());
 
                    services.AddHostedService<MonitorIpv4ServerService>();
                })

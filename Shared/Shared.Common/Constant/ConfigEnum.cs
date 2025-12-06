@@ -14,4 +14,7 @@ public static class ConfigEnum
 
     public static string Ipv4Config = "Ipv4Urls";
 
+
+    public static string WIREGUARD = "VPN:WireguardVPN";
+
 }

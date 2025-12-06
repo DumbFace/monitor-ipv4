@@ -1,0 +1,11 @@
+[Interface]
+Address = {address}
+PrivateKey= {privateKey}
+
+[Peer]
+PublicKey = {publicKey}
+Endpoint = {ipv4}:51820 
+AllowedIPs = {subnetVPN}
+PersistentKeepalive = 25
+
+

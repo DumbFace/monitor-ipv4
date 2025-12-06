@@ -6,4 +6,7 @@ public static class EnvironmentEnum
     public static string PROD = "Production";
 
     public static string FIREBASE_SECRET = "FIREBASE_SECRET";
+
+    public static string WG_SECRET = "WG_SECRET";
+
 }

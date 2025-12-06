@@ -24,8 +24,11 @@ namespace Shared.Shared.Infrastructure.Serivces
             _logger = logger;
         }
 
-        public async Task RestartService(string serviceName)
+        public async Task RestartService()
         {
+            var serviceName = OperatingSystem.IsLinux() ?
+                    _systemConfigMonitor.CurrentValue.LinuxOperating.OpenVPNService :
+                    _systemConfigMonitor.CurrentValue.WindowOperating.OpenVPNService;
             await Task.Run(() =>
             {
 #pragma warning disable CA1416

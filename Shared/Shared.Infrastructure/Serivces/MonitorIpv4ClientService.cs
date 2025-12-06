@@ -14,7 +14,7 @@ public class MonitorIpv4ClientService : BackgroundService
     private readonly ICaching _memoryCache;
     private readonly IDatabase _database;
 
-    private readonly IOpenVPN _openVPN;
+    private readonly IVPNHandler _vpn;
     readonly IOptionsMonitor<SystemConfig> _systemConfigMonitor;
     private readonly ResiliencePipeline _pipeline;
 
@@ -23,7 +23,7 @@ public class MonitorIpv4ClientService : BackgroundService
 
     public MonitorIpv4ClientService(
         IDataCRUD firebase,
-        IOpenVPN openVPN,
+        IVPNHandler vpn,
         ICaching memoryCache,
         IDatabase database,
         ILog logger,
@@ -37,7 +37,7 @@ public class MonitorIpv4ClientService : BackgroundService
         _memoryCache = memoryCache;
         _database = database;
         _logger = logger;
-        _openVPN = openVPN;
+        _vpn = vpn;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -83,10 +83,8 @@ public class MonitorIpv4ClientService : BackgroundService
                 if (lastIp == ipFromService)
                     continue;
 
-                await _openVPN.UpdateClient(ipFromService);
-                await _openVPN.RestartService(OperatingSystem.IsLinux() ?
-                    _systemConfigMonitor.CurrentValue.LinuxOperating.OpenVPNService :
-                    _systemConfigMonitor.CurrentValue.WindowOperating.OpenVPNService);
+                await _vpn.UpdateClient(ipFromService);
+                await _vpn.RestartService();
 
                 await _database.ConnectDb();
                 await _database.SaveIP(ipFromService);

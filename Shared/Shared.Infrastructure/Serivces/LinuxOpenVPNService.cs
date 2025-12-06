@@ -24,10 +24,15 @@ namespace Shared.Shared.Infrastructure.Serivces
             _logger = logger;
         }
 
-        public async Task RestartService(string serviceName)
+        public async Task RestartService()
         {
+            var serviceName = OperatingSystem.IsLinux() ?
+                _systemConfigMonitor.CurrentValue.LinuxOperating.OpenVPNService :
+                _systemConfigMonitor.CurrentValue.WindowOperating.OpenVPNService;
             await Task.Run(() => Process.Start("sudo", $"systemctl restart {serviceName}"));
-            _logger.Info($"Restart Service Openvpn Linux Successful at {DateTime.Now}");
+
+
+            _logger.Info($"Restart Service {serviceName} Openvpn Linux Successful at {DateTime.Now}");
         }
 
         public async Task UpdateClient(string ipv4)
